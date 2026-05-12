@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:uuid/uuid.dart';
 import '../../../core/models/household_model.dart';
 import '../../../core/models/invitation_model.dart';
 
@@ -22,7 +23,7 @@ class HouseholdRepository {
     return HouseholdModel.fromJson(response);
   }
 
-  /// Creates a new household and links the user.
+  /// Creates a new household and initializes default data.
   Future<HouseholdModel> createHousehold(String name, String userId) async {
     // 1. Create household
     final householdData = await _supabase
@@ -38,6 +39,22 @@ class HouseholdRepository {
         .from('users')
         .update({'household_id': household.id})
         .eq('id', userId);
+
+    // 3. Initialize Default Data (Headless approach)
+    // We could do this via a Postgres function, but for now we'll do it here
+    
+    // a. Create "General" Category
+    await _supabase.from('categories').insert({
+      'id': const Uuid().v4(),
+      'household_id': household.id,
+      'name': 'General',
+      'icon': 'folder',
+      'color': '#71717A',
+    });
+
+    // Note: We don't create "Unplanned" budget yet because it needs an account_id.
+    // The first budget will be created when the first account is added or manually.
+    // OR we could create a dummy account, but better wait for user action.
 
     return household;
   }
@@ -59,7 +76,6 @@ class HouseholdRepository {
 
   /// Accepts an invitation.
   Future<void> acceptInvitation(String token, String userId) async {
-    // 1. Get invitation
     final invitationData = await _supabase
         .from('invitations')
         .select()
@@ -70,13 +86,11 @@ class HouseholdRepository {
     if (invitationData == null) throw Exception('Invitation invalid or expired');
     final invitation = InvitationModel.fromJson(invitationData);
 
-    // 2. Update user
     await _supabase
         .from('users')
         .update({'household_id': invitation.householdId})
         .eq('id', userId);
 
-    // 3. Mark invitation as accepted
     await _supabase
         .from('invitations')
         .update({'status': 'accepted'})

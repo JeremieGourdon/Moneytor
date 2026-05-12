@@ -74,7 +74,7 @@ final class PeriodNotifierProvider
   PeriodNotifier create() => PeriodNotifier();
 }
 
-String _$periodNotifierHash() => r'9aac6eb965917eb0ac0b5a87b3702eb9462e490e';
+String _$periodNotifierHash() => r'db4e4d5f4d3dd7fdcdd1f245d488c5b656edb635';
 
 abstract class _$PeriodNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();
