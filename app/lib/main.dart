@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:moneytor/features/auth/providers/auth_provider.dart';
+import 'package:moneytor/features/auth/providers/profile_provider.dart';
 import 'package:moneytor/features/auth/views/login_screen.dart';
 import 'package:moneytor/features/auth/views/profile_screen.dart';
+import 'package:moneytor/features/household/views/household_setup_screen.dart';
 import 'package:moneytor/shared/theme/app_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -31,7 +33,22 @@ class MoneytorApp extends ConsumerWidget {
       home: authState.when(
         data: (user) {
           if (user == null) return const LoginScreen();
-          return const ProfileScreen();
+
+          // Check if user has a household
+          return ref.watch(profileProvider).when(
+                data: (profile) {
+                  // If profile is null or has no household_id (placeholder UUID check)
+                  if (profile == null ||
+                      profile.householdId == '00000000-0000-0000-0000-000000000000') {
+                    return const HouseholdSetupScreen();
+                  }
+                  return const ProfileScreen();
+                },
+                loading: () => const Scaffold(
+                    body: Center(child: CircularProgressIndicator(color: Colors.black))),
+                error: (err, stack) =>
+                    Scaffold(body: Center(child: Text('Profile Error: $err'))),
+              );
         },
         loading: () => const Scaffold(
           body: Center(child: CircularProgressIndicator(color: Colors.black)),
