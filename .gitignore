@@ -1,0 +1,50 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+.idea/
+.vscode/
+
+# Flutter-specific
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# Android-specific
+/android/app/src/main/res/values/strings.xml
+/android/key.properties
+/android/app/google-services.json
+
+# iOS-specific
+/ios/Runner/GoogleService-Info.plist
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/flutter_export_environment.sh
+/ios/Flutter/App.framework
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Flutter.podspec
+/ios/DerivedData/
+/ios/.generated/
+
+# Web-specific
+/web/index.html
+
+# PowerSync & SQLite
+/powersync/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Sensitive data
+.env*
+*.secret
