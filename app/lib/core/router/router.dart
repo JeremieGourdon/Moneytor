@@ -7,6 +7,8 @@ import '../../features/auth/views/login_screen.dart';
 import '../../features/auth/views/profile_screen.dart';
 import '../../features/household/views/household_setup_screen.dart';
 import '../../features/accounts/views/accounts_screen.dart';
+import '../../features/dashboard/views/dashboard_screen.dart';
+import '../../shared/widgets/main_layout.dart';
 
 part 'router.g.dart';
 
@@ -40,17 +42,30 @@ GoRouter router(Ref ref) {
         path: '/setup-household',
         builder: (context, state) => const HouseholdSetupScreen(),
       ),
-      GoRoute(
-        path: '/dashboard',
-        builder: (context, state) => const Scaffold(body: Center(child: Text('Dashboard Placeholder'))),
-      ),
-      GoRoute(
-        path: '/accounts',
-        builder: (context, state) => const AccountsScreen(),
-      ),
-      GoRoute(
-        path: '/profile',
-        builder: (context, state) => const ProfileScreen(),
+      ShellRoute(
+        builder: (context, state, child) => MainLayout(child: child),
+        routes: [
+          GoRoute(
+            path: '/dashboard',
+            builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: '/accounts',
+            builder: (context, state) => const AccountsScreen(),
+          ),
+          GoRoute(
+            path: '/budgets',
+            builder: (context, state) => const Scaffold(body: Center(child: Text('Budgets Placeholder'))),
+          ),
+          GoRoute(
+            path: '/projects',
+            builder: (context, state) => const Scaffold(body: Center(child: Text('Projects Placeholder'))),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const ProfileScreen(),
+          ),
+        ],
       ),
     ],
   );
