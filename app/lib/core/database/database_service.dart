@@ -11,6 +11,8 @@ part 'database_service.g.dart';
 @Riverpod(keepAlive: true)
 class DatabaseService extends _$DatabaseService {
   late final PowerSyncDatabase _db;
+  
+  PowerSyncDatabase get db => _db;
 
   @override
   Future<PowerSyncDatabase> build() async {
@@ -27,22 +29,27 @@ class DatabaseService extends _$DatabaseService {
     return _db;
   }
 
+  /// Helper to watch a query
+  Stream<List<Map<String, dynamic>>> watch(String sql, [List<dynamic>? params]) {
+    return _db.watch(sql, parameters: params ?? []);
+  }
+
   /// Helper to execute a query
   Future<List<Map<String, dynamic>>> query(String sql,
       [List<dynamic>? params]) async {
-    final db = await future;
-    return db.getAll(sql, params ?? []);
+    await future; // Ensure initialized
+    return _db.getAll(sql, params ?? []);
   }
 
   /// Helper to execute a single row query
   Future<Map<String, dynamic>?> get(String sql, [List<dynamic>? params]) async {
-    final db = await future;
-    return db.getOptional(sql, params ?? []);
+    await future;
+    return _db.getOptional(sql, params ?? []);
   }
 
   /// Helper to execute a write operation
   Future<void> execute(String sql, [List<dynamic>? params]) async {
-    final db = await future;
-    await db.execute(sql, params ?? []);
+    await future;
+    await _db.execute(sql, params ?? []);
   }
 }
