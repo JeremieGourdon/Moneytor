@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../accounts/providers/account_provider.dart';
+import '../../budgets/providers/budget_provider.dart';
+import '../../transactions/providers/transaction_provider.dart';
 
 class QuickAddSheet extends ConsumerStatefulWidget {
   const QuickAddSheet({super.key});
@@ -12,37 +15,76 @@ class QuickAddSheet extends ConsumerStatefulWidget {
 }
 
 class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
-  String _amount = '0';
+  String _amountStr = '0';
   bool _isExpense = true;
   final FocusNode _keyboardFocusNode = FocusNode();
+  final _noteController = TextEditingController();
+
+  String? _selectedAccountId;
+  String? _selectedBudgetId;
 
   void _handleKeyPress(String value) {
     setState(() {
       if (value == '.') {
-        if (!_amount.contains('.')) {
-          _amount += '.';
+        if (!_amountStr.contains('.')) {
+          _amountStr += '.';
         }
       } else if (value == 'backspace') {
-        if (_amount.length > 1) {
-          _amount = _amount.substring(0, _amount.length - 1);
-          if (_amount.endsWith('.')) {
-            _amount = _amount.substring(0, _amount.length - 1);
+        if (_amountStr.length > 1) {
+          _amountStr = _amountStr.substring(0, _amountStr.length - 1);
+          if (_amountStr.endsWith('.')) {
+            _amountStr = _amountStr.substring(0, _amountStr.length - 1);
           }
         } else {
-          _amount = '0';
+          _amountStr = '0';
         }
       } else {
-        if (_amount == '0') {
-          _amount = value;
+        if (_amountStr == '0') {
+          _amountStr = value;
         } else {
-          _amount += value;
+          _amountStr += value;
         }
       }
     });
   }
 
+  Future<void> _handleValidate() async {
+    if (_selectedAccountId == null || _selectedBudgetId == null) return;
+
+    final double amountDouble = double.tryParse(_amountStr) ?? 0;
+    final int amountCents = (amountDouble * 100).toInt();
+
+    if (amountCents == 0) return;
+
+    await ref.read(transactionProvider.notifier).addTransaction(
+          accountId: _selectedAccountId!,
+          budgetId: _selectedBudgetId!,
+          amount: amountCents,
+          isExpense: _isExpense,
+          note: _noteController.text.isEmpty ? null : _noteController.text,
+        );
+
+    if (mounted) Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final accounts = ref.watch(accountsProvider).value ?? [];
+
+    // Auto-select first account if none selected
+    if (_selectedAccountId == null && accounts.isNotEmpty) {
+      _selectedAccountId = accounts.first.id;
+    }
+
+    final budgets = _selectedAccountId != null
+        ? ref.watch(accountBudgetsProvider(_selectedAccountId!)).value ?? []
+        : [];
+
+    // Auto-select first budget if none selected
+    if (_selectedBudgetId == null && budgets.isNotEmpty) {
+      _selectedBudgetId = budgets.first.id;
+    }
+
     return KeyboardListener(
       focusNode: _keyboardFocusNode,
       autofocus: true,
@@ -51,10 +93,11 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
           final logicalKey = event.logicalKey;
           if (logicalKey == LogicalKeyboardKey.backspace) {
             _handleKeyPress('backspace');
-          } else if (logicalKey == LogicalKeyboardKey.period || logicalKey == LogicalKeyboardKey.comma) {
+          } else if (logicalKey == LogicalKeyboardKey.period ||
+              logicalKey == LogicalKeyboardKey.comma) {
             _handleKeyPress('.');
           } else if (logicalKey == LogicalKeyboardKey.enter) {
-            // TODO: Validate
+            _handleValidate();
           } else {
             final label = logicalKey.keyLabel;
             if (RegExp(r'^[0-9]$').hasMatch(label)) {
@@ -72,7 +115,6 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header Toggle
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -82,47 +124,66 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
               ],
             ),
             const SizedBox(height: 32),
-            
-            // Amount Display
             Text(
-              '$_amount €',
+              '$_amountStr €',
               style: GoogleFonts.jetBrainsMono(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
               ),
             ),
-            const SizedBox(height: 32),
-            
-            // Selectors
+            const SizedBox(height: 24),
+            TextField(
+              controller: _noteController,
+              decoration: const InputDecoration(
+                hintText: 'Add a note...',
+                border: InputBorder.none,
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildSelector('Account', 'Checking')),
+                Expanded(
+                  child: _buildSelector(
+                    'Account',
+                    accounts
+                            .where((a) => a.id == _selectedAccountId)
+                            .firstOrNull
+                            ?.name ??
+                        (accounts.isNotEmpty ? accounts.first.name : 'Checking'),
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: _buildSelector('Budget', 'Unplanned')),
+                Expanded(
+                  child: _buildSelector(
+                    'Budget',
+                    budgets
+                            .where((b) => b.id == _selectedBudgetId)
+                            .firstOrNull
+                            ?.name ??
+                        (budgets.isNotEmpty ? budgets.first.name : 'Unplanned'),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 32),
-            
-            // Custom Keypad
             _buildKeypad(),
-            
             const SizedBox(height: 24),
-            
-            // Validate Button
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: _handleValidate,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 60),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               child: Text(
                 'VALIDATE',
-                style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold, letterSpacing: 2),
+                style: GoogleFonts.jetBrainsMono(
+                    fontWeight: FontWeight.bold, letterSpacing: 2),
               ),
             ),
           ],
@@ -164,12 +225,20 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 10,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              Flexible(
+                  child: Text(value,
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis)),
               const Icon(LucideIcons.chevron_down, size: 14, color: Colors.grey),
             ],
           ),

@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../auth/providers/profile_provider.dart';
 import '../../periods/providers/period_provider.dart';
+import '../../household/providers/household_provider.dart';
+import '../../transactions/providers/transaction_provider.dart';
+
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -12,6 +16,9 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider).value;
     final currentPeriod = ref.watch(currentPeriodProvider).value;
+    final totalRavAsync = ref.watch(totalDisposableIncomeProvider);
+    final currency = ref.watch(householdProvider).value?.currency ?? 'EUR';
+    final formatter = NumberFormat.simpleCurrency(name: currency);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -52,7 +59,6 @@ class DashboardScreen extends ConsumerWidget {
                         onPressed: () {},
                         icon: const Icon(LucideIcons.bell, size: 24),
                       ),
-                      // Red dot for pending tasks (static for now)
                       Positioned(
                         right: 8,
                         top: 8,
@@ -72,11 +78,15 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // Hero RAV Section (The Split Card)
-              _buildHeroRAV(context),
+              totalRavAsync.when(
+                data: (rav) => _buildHeroRAV(context, rav, formatter),
+                loading: () => const Center(
+                    child: CircularProgressIndicator(color: Colors.black)),
+                error: (err, _) => Text('Error: $err'),
+              ),
 
               const SizedBox(height: 32),
 
-              // Placeholder sections for Carousel and Budgets
               const Text(
                 'COMING THIS WEEK',
                 style: TextStyle(
@@ -88,7 +98,9 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               const SizedBox(
                 height: 120,
-                child: Center(child: Text('Carousel coming soon...', style: TextStyle(color: Colors.grey))),
+                child: Center(
+                    child: Text('Carousel coming soon...',
+                        style: TextStyle(color: Colors.grey))),
               ),
 
               const SizedBox(height: 32),
@@ -103,7 +115,9 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               const AspectRatio(
                 aspectRatio: 1,
-                child: Center(child: Text('Budget Grid coming soon...', style: TextStyle(color: Colors.grey))),
+                child: Center(
+                    child: Text('Budget Grid coming soon...',
+                        style: TextStyle(color: Colors.grey))),
               ),
             ],
           ),
@@ -112,7 +126,10 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeroRAV(BuildContext context) {
+  Widget _buildHeroRAV(
+      BuildContext context, int ravCents, NumberFormat formatter) {
+    final ravDouble = ravCents / 100.0;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -134,7 +151,7 @@ class DashboardScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '850.00 €', // TODO: Actual calculation
+            formatter.format(ravDouble),
             style: GoogleFonts.jetBrainsMono(
               color: Colors.white,
               fontSize: 32,
@@ -152,7 +169,7 @@ class DashboardScreen extends ConsumerWidget {
                 style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
               Text(
-                '720.00 €', // TODO: Actual calculation
+                '--.-- €', // TODO: Add forecasted logic
                 style: GoogleFonts.jetBrainsMono(
                   color: Colors.white,
                   fontSize: 14,
