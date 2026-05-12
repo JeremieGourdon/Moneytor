@@ -15,6 +15,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isSignUp = false;
 
   @override
   void dispose() {
@@ -23,7 +24,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleEmailLogin() async {
+  Future<void> _handleAuth() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       _showError('Please fill in all fields');
       return;
@@ -31,10 +32,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(authStateProvider.notifier).signIn(
-            _emailController.text,
-            _passwordController.text,
+      if (_isSignUp) {
+        await ref.read(authStateProvider.notifier).signUp(
+              _emailController.text,
+              _passwordController.text,
+            );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account created! Please check your email to confirm.'),
+              backgroundColor: Colors.black,
+            ),
           );
+        }
+      } else {
+        await ref.read(authStateProvider.notifier).signIn(
+              _emailController.text,
+              _passwordController.text,
+            );
+      }
     } catch (e) {
       _showError(e.toString());
     } finally {
@@ -131,7 +147,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               
               // Primary Action
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleEmailLogin,
+                onPressed: _isLoading ? null : _handleAuth,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
@@ -151,7 +167,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       )
                     : Text(
-                        'LOGIN',
+                        _isSignUp ? 'CREATE ACCOUNT' : 'LOGIN',
                         style: GoogleFonts.jetBrainsMono(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1,
@@ -160,6 +176,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
               
               const SizedBox(height: 16),
+
+              // Toggle Login/SignUp
+              TextButton(
+                onPressed: () => setState(() => _isSignUp = !_isSignUp),
+                child: Text(
+                  _isSignUp ? 'Already have an account? Login' : 'Need an account? Sign Up',
+                  style: const TextStyle(color: Colors.black, fontSize: 13),
+                ),
+              ),
+              
+              const SizedBox(height: 8),
               
               // Magic Link Action
               OutlinedButton(
