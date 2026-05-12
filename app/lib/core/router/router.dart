@@ -8,6 +8,9 @@ import '../../features/auth/views/profile_screen.dart';
 import '../../features/household/views/household_setup_screen.dart';
 import '../../features/accounts/views/accounts_screen.dart';
 import '../../features/dashboard/views/dashboard_screen.dart';
+import '../../features/budgets/views/budgets_screen.dart';
+import '../../features/budgets/views/budget_detail_screen.dart';
+import '../models/budget_model.dart';
 import '../../shared/widgets/main_layout.dart';
 
 part 'router.g.dart';
@@ -55,7 +58,13 @@ GoRouter router(Ref ref) {
           ),
           GoRoute(
             path: '/budgets',
-            builder: (context, state) => const Scaffold(body: Center(child: Text('Budgets Placeholder'))),
+            builder: (context, state) => const BudgetsScreen(),
+            routes: [
+              GoRoute(
+                path: 'detail',
+                builder: (context, state) => BudgetDetailScreen(budget: state.extra as BudgetModel),
+              ),
+            ],
           ),
           GoRoute(
             path: '/projects',

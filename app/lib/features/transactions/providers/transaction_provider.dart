@@ -107,6 +107,7 @@ Stream<int> totalDisposableIncome(Ref ref) async* {
     return;
   }
 
+  // Watch for any transaction changes in the household
   final household = ref.watch(householdProvider).value;
   if (household == null) {
     yield 0;
@@ -115,10 +116,12 @@ Stream<int> totalDisposableIncome(Ref ref) async* {
 
   final repository = ref.watch(transactionRepositoryProvider);
   yield* repository.dbService.watch(
-    'SELECT 1', // Trigger on any write
+    'SELECT 1 FROM transactions WHERE household_id = ?',
+    [household.id],
   ).asyncMap((_) async {
     int total = 0;
     for (final account in checkingAccounts) {
+      // Use the existing per-account provider
       final rav = await ref.read(disposableIncomeProvider(account.id).future);
       total += rav;
     }
