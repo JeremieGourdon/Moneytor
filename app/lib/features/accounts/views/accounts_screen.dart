@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
+import 'package:go_router/go_router.dart';
+import 'dart:developer' as developer;
 import '../providers/account_provider.dart';
 import '../../periods/providers/period_provider.dart';
+import '../../household/providers/household_provider.dart';
 import '../../../core/models/account_model.dart';
 import '../../../core/models/financial_period_model.dart';
 
@@ -15,10 +19,21 @@ class AccountsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final accountsAsync = ref.watch(accountsProvider);
     final currentPeriodAsync = ref.watch(currentPeriodProvider);
+    final householdAsync = ref.watch(householdProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('ACCOUNTS', style: TextStyle(letterSpacing: 2)),
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.refresh_cw, size: 20),
+            onPressed: () {
+              ref.invalidate(accountsProvider);
+              ref.invalidate(currentPeriodProvider);
+              ref.invalidate(householdProvider);
+            },
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -31,6 +46,16 @@ class AccountsScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Debug Info (Hidden in prod)
+              if (householdAsync.value != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Text(
+                    'Household: ${householdAsync.value!.name} (${householdAsync.value!.id.substring(0, 8)}...)',
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                ),
+
               _buildCycleControl(context, ref, currentPeriodAsync),
               const SizedBox(height: 32),
               const Text(
@@ -61,11 +86,13 @@ class AccountsScreen extends ConsumerWidget {
                       ),
                 loading: () => const Center(
                     child: CircularProgressIndicator(color: Colors.black)),
-                error: (err, _) => Text('Error: $err'),
+                error: (err, _) => Text('Error loading accounts: $err'),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: () => _showAddAccountDialog(context, ref),
+                onPressed: householdAsync.value == null
+                    ? null
+                    : () => _showAddAccountDialog(context, ref),
                 icon: const Icon(LucideIcons.plus, size: 18),
                 label: const Text('ADD ACCOUNT'),
                 style: ElevatedButton.styleFrom(
@@ -85,6 +112,8 @@ class AccountsScreen extends ConsumerWidget {
 
   Widget _buildCycleControl(BuildContext context, WidgetRef ref,
       AsyncValue<FinancialPeriodModel?> periodAsync) {
+    final period = periodAsync.value;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -96,10 +125,9 @@ class AccountsScreen extends ConsumerWidget {
               children: [
                 const Text('FINANCIAL CYCLE',
                     style: TextStyle(fontWeight: FontWeight.bold)),
-                if (periodAsync.value != null)
+                if (period != null)
                   IconButton(
-                    onPressed: () =>
-                        _showEditPeriodDialog(context, ref, periodAsync.value!),
+                    onPressed: () => _showEditPeriodDialog(context, ref, period),
                     icon: const Icon(LucideIcons.pencil,
                         size: 16, color: Colors.grey),
                     constraints: const BoxConstraints(),
@@ -131,16 +159,17 @@ class AccountsScreen extends ConsumerWidget {
                       ],
                     ),
               loading: () => const SizedBox(),
-              error: (err, stack) => const Text('Error loading cycle'),
+              error: (err, _) => Text('Error: $err',
+                  style: const TextStyle(color: Colors.red, fontSize: 10)),
             ),
             const SizedBox(height: 20),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: periodAsync.value == null
+                    onPressed: period == null
                         ? null
-                        : () => ref.read(periodProvider.notifier).delayPeriod(),
+                        : () => _handleDelayPeriod(context, ref),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -150,14 +179,13 @@ class AccountsScreen extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => _handleStartPeriod(context, ref, periodAsync.value == null),
+                    onPressed: () =>
+                        _handleStartPeriod(context, ref, period == null),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12)),
-                    child: Text(periodAsync.value == null
-                        ? 'START FIRST'
-                        : 'START NEXT'),
+                    child: Text(period == null ? 'START FIRST' : 'START NEXT'),
                   ),
                 ),
               ],
@@ -202,20 +230,54 @@ class AccountsScreen extends ConsumerWidget {
     );
   }
 
-  void _handleStartPeriod(BuildContext context, WidgetRef ref, bool isFirst) async {
-    if (isFirst) {
-      final date = await showDatePicker(
-        context: context,
-        initialDate: DateTime.now(),
-        firstDate: DateTime.now().subtract(const Duration(days: 60)),
-        lastDate: DateTime.now().add(const Duration(days: 30)),
-        helpText: 'Select Start Date for first cycle',
-      );
-      if (date != null) {
-        await ref.read(periodProvider.notifier).startNextPeriod(customStartDate: date);
+  Future<void> _handleDelayPeriod(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(periodProvider.notifier).delayPeriod();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cycle delayed by 1 day')),
+        );
       }
-    } else {
-      await ref.read(periodProvider.notifier).startNextPeriod();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleStartPeriod(
+      BuildContext context, WidgetRef ref, bool isFirst) async {
+    try {
+      DateTime? startDate;
+      if (isFirst) {
+        startDate = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime.now().subtract(const Duration(days: 60)),
+          lastDate: DateTime.now().add(const Duration(days: 30)),
+          helpText: 'Select Start Date for first cycle',
+        );
+        if (startDate == null) return;
+      }
+
+      await ref
+          .read(periodProvider.notifier)
+          .startNextPeriod(customStartDate: startDate);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(isFirst ? 'First cycle started!' : 'New cycle started!')),
+        );
+      }
+    } catch (e) {
+      developer.log('Error starting period', error: e);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -230,7 +292,20 @@ class AccountsScreen extends ConsumerWidget {
     );
 
     if (newDate != null) {
-      await ref.read(periodProvider.notifier).adjustCurrentStart(newDate);
+      try {
+        await ref.read(periodProvider.notifier).adjustCurrentStart(newDate);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cycle start date adjusted')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
     }
   }
 
@@ -255,7 +330,7 @@ class AccountsScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                initialValue: type,
+                value: type,
                 items: const [
                   DropdownMenuItem(value: 'checking', child: Text('Checking')),
                   DropdownMenuItem(
@@ -280,14 +355,26 @@ class AccountsScreen extends ConsumerWidget {
             ElevatedButton(
               onPressed: () async {
                 if (nameController.text.isNotEmpty) {
-                  await ref
-                      .read(accountProvider.notifier)
-                      .createAccount(
-                        nameController.text,
-                        type: type,
-                        isPublic: isPublic,
+                  try {
+                    await ref.read(accountProvider.notifier).createAccount(
+                          nameController.text,
+                          type: type,
+                          isPublic: isPublic,
+                        );
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Account created successfully')),
                       );
-                  if (context.mounted) Navigator.pop(context);
+                    }
+                  } catch (e) {
+                    developer.log('Error creating account', error: e);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                      );
+                    }
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(

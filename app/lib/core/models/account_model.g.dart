@@ -12,7 +12,9 @@ AccountModel _$AccountModelFromJson(Map<String, dynamic> json) => AccountModel(
   ownerId: json['owner_id'] as String?,
   name: json['name'] as String,
   type: json['type'] as String? ?? 'checking',
-  isPublic: json['is_public'] as bool? ?? true,
+  isPublic: json['is_public'] == null
+      ? true
+      : const SQLiteBoolConverter().fromJson(json['is_public']),
   createdAt: DateTime.parse(json['created_at'] as String),
   updatedAt: DateTime.parse(json['updated_at'] as String),
   deletedAt: json['deleted_at'] == null
@@ -27,7 +29,7 @@ Map<String, dynamic> _$AccountModelToJson(AccountModel instance) =>
       'owner_id': instance.ownerId,
       'name': instance.name,
       'type': instance.type,
-      'is_public': instance.isPublic,
+      'is_public': const SQLiteBoolConverter().toJson(instance.isPublic),
       'created_at': instance.createdAt.toIso8601String(),
       'updated_at': instance.updatedAt.toIso8601String(),
       'deleted_at': instance.deletedAt?.toIso8601String(),
