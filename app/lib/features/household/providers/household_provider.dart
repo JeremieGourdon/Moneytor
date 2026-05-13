@@ -16,7 +16,7 @@ class HouseholdNotifier extends _$HouseholdNotifier {
     return await repository.getHousehold(profile.householdId);
   }
 
-  Future<void> createHousehold(String name) async {
+  Future<void> createHousehold(String name, {int startDay = 1}) async {
     final profile = await ref.read(profileProvider.future);
     if (profile == null) return;
 
@@ -24,11 +24,22 @@ class HouseholdNotifier extends _$HouseholdNotifier {
     state = await AsyncValue.guard(() async {
       final household = await ref
           .read(householdRepositoryProvider)
-          .createHousehold(name, profile.id);
+          .createHousehold(name, profile.id, startDay: startDay);
       
-      // Refresh profile to get updated household_id
       ref.invalidate(profileProvider);
       return household;
+    });
+  }
+
+  Future<void> updateDefaultStartDay(int day) async {
+    final household = state.value;
+    if (household == null) return;
+
+    final updated = household.copyWith(defaultMonthStartDay: day);
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(householdRepositoryProvider).updateHousehold(updated);
+      return updated;
     });
   }
 
@@ -43,7 +54,9 @@ class HouseholdNotifier extends _$HouseholdNotifier {
           .acceptInvitation(token, profile.id);
       
       ref.invalidate(profileProvider);
-      return await ref.read(householdRepositoryProvider).getHousehold(token); // Temporary
+      // After accepting, we need to fetch the newly joined household
+      final newProfile = await ref.read(profileProvider.future);
+      return await ref.read(householdRepositoryProvider).getHousehold(newProfile!.householdId);
     });
   }
 }

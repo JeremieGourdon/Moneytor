@@ -3,9 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:uuid/uuid.dart';
-import 'package:go_router/go_router.dart';
-import 'dart:developer' as developer;
 import '../providers/account_provider.dart';
 import '../../periods/providers/period_provider.dart';
 import '../../household/providers/household_provider.dart';
@@ -19,7 +16,8 @@ class AccountsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final accountsAsync = ref.watch(accountsProvider);
     final currentPeriodAsync = ref.watch(currentPeriodProvider);
-    final householdAsync = ref.watch(householdProvider);
+    final allPeriodsAsync = ref.watch(allPeriodsProvider);
+    final household = ref.watch(householdProvider).value;
 
     return Scaffold(
       appBar: AppBar(
@@ -30,7 +28,7 @@ class AccountsScreen extends ConsumerWidget {
             onPressed: () {
               ref.invalidate(accountsProvider);
               ref.invalidate(currentPeriodProvider);
-              ref.invalidate(householdProvider);
+              ref.invalidate(allPeriodsProvider);
             },
           ),
         ],
@@ -39,6 +37,7 @@ class AccountsScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(accountsProvider);
           ref.invalidate(currentPeriodProvider);
+          ref.invalidate(allPeriodsProvider);
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -46,18 +45,16 @@ class AccountsScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Debug Info (Hidden in prod)
-              if (householdAsync.value != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Text(
-                    'Household: ${householdAsync.value!.name} (${householdAsync.value!.id.substring(0, 8)}...)',
-                    style: const TextStyle(fontSize: 10, color: Colors.grey),
-                  ),
-                ),
+              // 1. Global Cycle Setting
+              if (household != null)
+                _buildGlobalCycleSetting(context, ref, household.defaultMonthStartDay),
+              const SizedBox(height: 24),
 
+              // 2. Active Period Card
               _buildCycleControl(context, ref, currentPeriodAsync),
               const SizedBox(height: 32),
+
+              // 3. Accounts List
               const Text(
                 'YOUR ACCOUNTS',
                 style: TextStyle(
@@ -71,14 +68,14 @@ class AccountsScreen extends ConsumerWidget {
                     ? const Center(
                         child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 32.0),
-                        child: Text('No accounts yet. Add your first one below.',
+                        child: Text('No accounts yet.',
                             style: TextStyle(color: Colors.grey)),
                       ))
                     : ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: accounts.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 12),
+                        separatorBuilder: (context, index) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final account = accounts[index];
                           return _buildAccountCard(context, ref, account);
@@ -86,13 +83,11 @@ class AccountsScreen extends ConsumerWidget {
                       ),
                 loading: () => const Center(
                     child: CircularProgressIndicator(color: Colors.black)),
-                error: (err, _) => Text('Error loading accounts: $err'),
+                error: (err, _) => Text('Error: $err'),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: householdAsync.value == null
-                    ? null
-                    : () => _showAddAccountDialog(context, ref),
+                onPressed: () => _showAddAccountDialog(context, ref),
                 icon: const Icon(LucideIcons.plus, size: 18),
                 label: const Text('ADD ACCOUNT'),
                 style: ElevatedButton.styleFrom(
@@ -103,6 +98,23 @@ class AccountsScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(8)),
                 ),
               ),
+
+              const SizedBox(height: 48),
+
+              // 4. Period History / Editor
+              const Text(
+                'PERIOD HISTORY',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+              allPeriodsAsync.when(
+                data: (periods) => _buildPeriodHistory(context, ref, periods),
+                loading: () => const SizedBox(),
+                error: (_, __) => const Text('Error loading history'),
+              ),
             ],
           ),
         ),
@@ -110,88 +122,138 @@ class AccountsScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildGlobalCycleSetting(
+      BuildContext context, WidgetRef ref, int currentDay) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE4E4E7)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text('Default Start Day',
+              style: TextStyle(fontWeight: FontWeight.w500)),
+          DropdownButton<int>(
+            value: currentDay,
+            underline: const SizedBox(),
+            items: List.generate(31, (i) => i + 1)
+                .map((day) => DropdownMenuItem(value: day, child: Text('$day')))
+                .toList(),
+            onChanged: (val) {
+              if (val != null) {
+                ref.read(periodProvider.notifier).updateDefaultStartDay(val);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCycleControl(BuildContext context, WidgetRef ref,
       AsyncValue<FinancialPeriodModel?> periodAsync) {
-    final period = periodAsync.value;
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('FINANCIAL CYCLE',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                if (period != null)
-                  IconButton(
-                    onPressed: () => _showEditPeriodDialog(context, ref, period),
-                    icon: const Icon(LucideIcons.pencil,
-                        size: 16, color: Colors.grey),
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
+            const Text('ACTIVE CYCLE',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: Colors.grey)),
+            const SizedBox(height: 12),
             periodAsync.when(
               data: (period) => period == null
-                  ? const Text(
-                      'No active cycle. Start your first month to begin.',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    )
+                  ? const Text('No active cycle found.')
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           period.name.toUpperCase(),
                           style: GoogleFonts.jetBrainsMono(
-                              fontWeight: FontWeight.bold),
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Started on: ${DateFormat('dd/MM/yyyy').format(period.startDate)}',
+                          'Since: ${DateFormat('dd MMM yyyy').format(period.startDate)}',
                           style:
                               const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                       ],
                     ),
-              loading: () => const SizedBox(),
-              error: (err, _) => Text('Error: $err',
-                  style: const TextStyle(color: Colors.red, fontSize: 10)),
+              loading: () =>
+                  const CircularProgressIndicator(color: Colors.black),
+              error: (err, _) => Text('Error: $err'),
             ),
             const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: period == null
-                        ? null
-                        : () => _handleDelayPeriod(context, ref),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text('DELAY +1D'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () =>
-                        _handleStartPeriod(context, ref, period == null),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12)),
-                    child: Text(period == null ? 'START FIRST' : 'START NEXT'),
-                  ),
-                ),
-              ],
+            ElevatedButton(
+              onPressed: () => _handleStartNextPeriod(context, ref),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 45),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8))),
+              child: const Text('START NEXT MONTH'),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPeriodHistory(
+      BuildContext context, WidgetRef ref, List<FinancialPeriodModel> periods) {
+    if (periods.isEmpty) {
+      return const Text('No history yet.',
+          style: TextStyle(color: Colors.grey, fontSize: 12));
+    }
+
+    return Column(
+      children: periods
+          .map((p) => _buildPeriodHistoryItem(context, ref, p))
+          .toList(),
+    );
+  }
+
+  Widget _buildPeriodHistoryItem(
+      BuildContext context, WidgetRef ref, FinancialPeriodModel period) {
+    final isCurrent = period.endDate == null;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE4E4E7)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(period.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                '${DateFormat('dd/MM').format(period.startDate)} - ${period.endDate != null ? DateFormat('dd/MM').format(period.endDate!) : 'Now'}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+          if (!isCurrent)
+            IconButton(
+              onPressed: () => _showEditPeriodEnd(context, ref, period),
+              icon:
+                  const Icon(LucideIcons.pencil, size: 16, color: Colors.black),
+            ),
+        ],
       ),
     );
   }
@@ -230,151 +292,113 @@ class AccountsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _handleDelayPeriod(BuildContext context, WidgetRef ref) async {
-    try {
-      await ref.read(periodProvider.notifier).delayPeriod();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cycle delayed by 1 day')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  Future<void> _handleStartPeriod(
-      BuildContext context, WidgetRef ref, bool isFirst) async {
-    try {
-      DateTime? startDate;
-      if (isFirst) {
-        startDate = await showDatePicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime.now().subtract(const Duration(days: 60)),
-          lastDate: DateTime.now().add(const Duration(days: 30)),
-          helpText: 'Select Start Date for first cycle',
-        );
-        if (startDate == null) return;
-      }
-
-      await ref
-          .read(periodProvider.notifier)
-          .startNextPeriod(customStartDate: startDate);
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(isFirst ? 'First cycle started!' : 'New cycle started!')),
-        );
-      }
-    } catch (e) {
-      developer.log('Error starting period', error: e);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  void _showEditPeriodDialog(
-      BuildContext context, WidgetRef ref, FinancialPeriodModel period) async {
-    final newDate = await showDatePicker(
+  void _handleStartNextPeriod(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      initialDate: period.startDate,
-      firstDate: period.startDate.subtract(const Duration(days: 31)),
-      lastDate: DateTime.now().add(const Duration(days: 31)),
-      helpText: 'Adjust Start Date',
+      builder: (context) => AlertDialog(
+        title: const Text('Start Next Month?'),
+        content: const Text(
+            'This will close the current cycle and start a new one based on today\'s date.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('CANCEL')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black, foregroundColor: Colors.white),
+            child: const Text('START NOW'),
+          ),
+        ],
+      ),
     );
 
-    if (newDate != null) {
-      try {
-        await ref.read(periodProvider.notifier).adjustCurrentStart(newDate);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cycle start date adjusted')),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-          );
-        }
-      }
+    if (confirmed == true) {
+      await ref.read(periodProvider.notifier).startNextPeriod();
+    }
+  }
+
+  void _showEditPeriodEnd(
+      BuildContext context, WidgetRef ref, FinancialPeriodModel period) async {
+    final newEnd = await showDatePicker(
+      context: context,
+      initialDate: period.endDate ?? DateTime.now(),
+      firstDate: period.startDate,
+      lastDate: DateTime.now().add(const Duration(days: 31)),
+      helpText: 'Adjust End of ${period.name}',
+    );
+
+    if (newEnd != null) {
+      await ref
+          .read(periodProvider.notifier)
+          .adjustPeriodEnd(period.id, newEnd);
     }
   }
 
   void _showAddAccountDialog(BuildContext context, WidgetRef ref) {
     final nameController = TextEditingController();
     String type = 'checking';
-    bool isPublic = true;
+    bool isPublic = false; // Default to Private
 
     showDialog(
       context: context,
+      barrierDismissible: false, // More robust for focus
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: Text('ADD ACCOUNT',
               style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                    labelText: 'Account Name', hintText: 'e.g., Main Checking'),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: type,
-                items: const [
-                  DropdownMenuItem(value: 'checking', child: Text('Checking')),
-                  DropdownMenuItem(
-                      value: 'savings_locked', child: Text('Savings (Locked)')),
-                ],
-                onChanged: (val) => setState(() => type = val!),
-                decoration: const InputDecoration(labelText: 'Type'),
-              ),
-              const SizedBox(height: 16),
-              SwitchListTile(
-                title: const Text('Public (Shared)',
-                    style: TextStyle(fontSize: 14)),
-                value: isPublic,
-                onChanged: (val) => setState(() => isPublic = val),
-              ),
-            ],
+          content: SingleChildScrollView(
+            // Better for keyboard
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                      labelText: 'Account Name',
+                      hintText: 'e.g., Main Checking'),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: type,
+                  items: const [
+                    DropdownMenuItem(value: 'checking', child: Text('Checking')),
+                    DropdownMenuItem(
+                        value: 'savings_locked',
+                        child: Text('Savings (Locked)')),
+                  ],
+                  onChanged: (val) => setState(() => type = val!),
+                  decoration: const InputDecoration(labelText: 'Type'),
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  title: const Text('Public (Shared)',
+                      style: TextStyle(fontSize: 14)),
+                  value: isPublic,
+                  onChanged: (val) => setState(() => isPublic = val),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  FocusScope.of(context).unfocus();
+                  Navigator.pop(context);
+                },
                 child: const Text('CANCEL')),
             ElevatedButton(
               onPressed: () async {
                 if (nameController.text.isNotEmpty) {
-                  try {
-                    await ref.read(accountProvider.notifier).createAccount(
-                          nameController.text,
-                          type: type,
-                          isPublic: isPublic,
-                        );
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Account created successfully')),
+                  FocusScope.of(context).unfocus();
+                  await ref.read(accountProvider.notifier).createAccount(
+                        nameController.text,
+                        type: type,
+                        isPublic: isPublic,
                       );
-                    }
-                  } catch (e) {
-                    developer.log('Error creating account', error: e);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-                      );
-                    }
-                  }
+                  if (context.mounted) Navigator.pop(context);
                 }
               },
               style: ElevatedButton.styleFrom(

@@ -24,11 +24,14 @@ class HouseholdRepository {
   }
 
   /// Creates a new household and initializes default data.
-  Future<HouseholdModel> createHousehold(String name, String userId) async {
+  Future<HouseholdModel> createHousehold(String name, String userId, {int startDay = 1}) async {
     // 1. Create household
     final householdData = await _supabase
         .from('households')
-        .insert({'name': name})
+        .insert({
+          'name': name,
+          'default_month_start_day': startDay,
+        })
         .select()
         .single();
     
@@ -40,10 +43,7 @@ class HouseholdRepository {
         .update({'household_id': household.id})
         .eq('id', userId);
 
-    // 3. Initialize Default Data (Headless approach)
-    // We could do this via a Postgres function, but for now we'll do it here
-    
-    // a. Create "General" Category
+    // 3. Initialize Default Data
     await _supabase.from('categories').insert({
       'id': const Uuid().v4(),
       'household_id': household.id,
@@ -52,11 +52,15 @@ class HouseholdRepository {
       'color': '#71717A',
     });
 
-    // Note: We don't create "Unplanned" budget yet because it needs an account_id.
-    // The first budget will be created when the first account is added or manually.
-    // OR we could create a dummy account, but better wait for user action.
-
     return household;
+  }
+
+  /// Updates household settings.
+  Future<void> updateHousehold(HouseholdModel household) async {
+    await _supabase
+        .from('households')
+        .update(household.toJson())
+        .eq('id', household.id);
   }
 
   /// Creates an invitation.

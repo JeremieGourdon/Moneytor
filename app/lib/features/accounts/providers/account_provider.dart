@@ -25,7 +25,7 @@ class AccountNotifier extends _$AccountNotifier {
   FutureOr<void> build() {}
 
   Future<void> createAccount(String name,
-      {String type = 'checking', bool isPublic = true}) async {
+      {String type = 'checking', bool isPublic = false}) async {
     final household = await ref.read(householdProvider.future);
     if (household == null) return;
 
@@ -34,7 +34,7 @@ class AccountNotifier extends _$AccountNotifier {
       householdId: household.id,
       name: name,
       type: type,
-      isPublic: isPublic,
+      isPublic: isPublic, // Now defaults to false (Private)
       createdAt: DateTime.now().toUtc(),
       updatedAt: DateTime.now().toUtc(),
     );

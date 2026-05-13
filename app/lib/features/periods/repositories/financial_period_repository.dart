@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
 import '../../../core/database/database_service.dart';
 import '../../../core/models/financial_period_model.dart';
 
@@ -48,7 +49,23 @@ class FinancialPeriodRepository {
     );
   }
 
-  /// Updates a period's dates (Error correction).
+  /// Updates a period's dates and ensures contiguity with neighbours.
+  Future<void> updatePeriodEnd(String periodId, DateTime newEnd, String householdId) async {
+    // 1. Update the end_date of this period
+    await _db.execute(
+      'UPDATE financial_periods SET end_date = ?, updated_at = ? WHERE id = ?',
+      [newEnd.toIso8601String(), DateTime.now().toUtc().toIso8601String(), periodId],
+    );
+
+    // 2. Update the start_date of the NEXT period (the one whose start_date matches previous end_date)
+    // In our chained model, the next period's start_date should be updated to newEnd.
+    await _db.execute(
+      'UPDATE financial_periods SET start_date = ?, updated_at = ? WHERE household_id = ? AND start_date > (SELECT start_date FROM financial_periods WHERE id = ?) ORDER BY start_date ASC LIMIT 1',
+      [newEnd.toIso8601String(), DateTime.now().toUtc().toIso8601String(), householdId, periodId],
+    );
+  }
+  
+  /// Helper to update a single period (Error correction)
   Future<void> updatePeriodDates(String id, DateTime start, DateTime? end) async {
     await _db.execute(
       'UPDATE financial_periods SET start_date = ?, end_date = ?, updated_at = ? WHERE id = ?',

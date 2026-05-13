@@ -50,6 +50,47 @@ final class CurrentPeriodProvider
 
 String _$currentPeriodHash() => r'8222ce886c4722ed0aec58ab8d0d54ec15974b33';
 
+@ProviderFor(allPeriods)
+final allPeriodsProvider = AllPeriodsProvider._();
+
+final class AllPeriodsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<FinancialPeriodModel>>,
+          List<FinancialPeriodModel>,
+          Stream<List<FinancialPeriodModel>>
+        >
+    with
+        $FutureModifier<List<FinancialPeriodModel>>,
+        $StreamProvider<List<FinancialPeriodModel>> {
+  AllPeriodsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'allPeriodsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$allPeriodsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<FinancialPeriodModel>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<FinancialPeriodModel>> create(Ref ref) {
+    return allPeriods(ref);
+  }
+}
+
+String _$allPeriodsHash() => r'ebb1cce519131f30486b34d5a5b6a947626bebb7';
+
 @ProviderFor(PeriodNotifier)
 final periodProvider = PeriodNotifierProvider._();
 
@@ -74,7 +115,7 @@ final class PeriodNotifierProvider
   PeriodNotifier create() => PeriodNotifier();
 }
 
-String _$periodNotifierHash() => r'db4e4d5f4d3dd7fdcdd1f245d488c5b656edb635';
+String _$periodNotifierHash() => r'63c98fd55776ba5e8f4f704068f0bd0f48bff5e1';
 
 abstract class _$PeriodNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

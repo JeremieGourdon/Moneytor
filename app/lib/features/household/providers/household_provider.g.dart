@@ -33,7 +33,7 @@ final class HouseholdNotifierProvider
   HouseholdNotifier create() => HouseholdNotifier();
 }
 
-String _$householdNotifierHash() => r'be0d83d7edcec2ab6b83ce315ff5dae545ccea4a';
+String _$householdNotifierHash() => r'077900b5720a3b952f2565ef6eb06fc4421fd207';
 
 abstract class _$HouseholdNotifier extends $AsyncNotifier<HouseholdModel?> {
   FutureOr<HouseholdModel?> build();
