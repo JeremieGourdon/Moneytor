@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 
@@ -46,6 +48,16 @@ class ProfileScreen extends ConsumerWidget {
                   'Household ID: ${user.householdId}',
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
+                const SizedBox(height: 32),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(LucideIcons.repeat),
+                  title: const Text('Abonnements & Récurrence'),
+                  subtitle: const Text('Gérer vos paiements automatiques'),
+                  trailing: const Icon(LucideIcons.chevron_right, size: 16),
+                  onTap: () => context.push('/recurring'),
+                ),
+                const Divider(),
               ],
             ),
           );

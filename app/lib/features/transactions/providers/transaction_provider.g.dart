@@ -9,6 +9,48 @@ part of 'transaction_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(pendingTransactions)
+final pendingTransactionsProvider = PendingTransactionsProvider._();
+
+final class PendingTransactionsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<TransactionModel>>,
+          List<TransactionModel>,
+          Stream<List<TransactionModel>>
+        >
+    with
+        $FutureModifier<List<TransactionModel>>,
+        $StreamProvider<List<TransactionModel>> {
+  PendingTransactionsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pendingTransactionsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pendingTransactionsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<TransactionModel>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<TransactionModel>> create(Ref ref) {
+    return pendingTransactions(ref);
+  }
+}
+
+String _$pendingTransactionsHash() =>
+    r'0319e15af752022011f85ca92848d5f75ffe52a0';
+
 @ProviderFor(TransactionNotifier)
 final transactionProvider = TransactionNotifierProvider._();
 
@@ -34,7 +76,7 @@ final class TransactionNotifierProvider
 }
 
 String _$transactionNotifierHash() =>
-    r'0d4cb248c7f85f1a5ca16c2b1cf9c66f3a4662c7';
+    r'd3f07adc51e2fe35d02d823c7236b2edba335196';
 
 abstract class _$TransactionNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

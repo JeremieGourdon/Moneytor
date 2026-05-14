@@ -181,15 +181,7 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const SizedBox(
-                height: 120,
-                child: Center(
-                  child: Text(
-                    'Carousel coming soon...',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-              ),
+              _buildComingWeek(context, ref, formatter),
 
               const SizedBox(height: 32),
               const Text(
@@ -274,6 +266,126 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildComingWeek(
+    BuildContext context,
+    WidgetRef ref,
+    NumberFormat formatter,
+  ) {
+    final pendingAsync = ref.watch(pendingTransactionsProvider);
+
+    return pendingAsync.when(
+      data: (txs) {
+        if (txs.isEmpty) {
+          return Container(
+            height: 100,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE4E4E7)),
+            ),
+            child: const Text(
+              'Aucune transaction prévue.',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: 120,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: txs.length,
+            separatorBuilder: (_, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final tx = txs[index];
+              return Container(
+                width: 200,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE4E4E7)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tx.description ?? 'Abonnement',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          formatter.format(tx.amount / 100),
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 13,
+                            color: tx.amount < 0 ? Colors.red : Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => ref
+                                .read(transactionProvider.notifier)
+                                .deleteTransaction(tx.id),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 30),
+                              foregroundColor: Colors.grey,
+                            ),
+                            child: const Text(
+                              'IGNORER',
+                              style: TextStyle(fontSize: 10),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => ref
+                                .read(transactionProvider.notifier)
+                                .clearTransaction(tx.id),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 30),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            child: const Text(
+                              'PAYÉ',
+                              style: TextStyle(fontSize: 10),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, _) => Text('Error: $err'),
     );
   }
 }

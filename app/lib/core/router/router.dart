@@ -4,6 +4,7 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/providers/profile_provider.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/projects/views/projects_screen.dart';
+import '../../features/recurring/views/recurring_templates_screen.dart';
 import '../../features/auth/views/profile_screen.dart';
 import '../../features/household/views/household_setup_screen.dart';
 import '../../features/accounts/views/accounts_screen.dart';
@@ -74,6 +75,10 @@ GoRouter router(Ref ref) {
           GoRoute(
             path: '/profile',
             builder: (context, state) => const ProfileScreen(),
+          ),
+          GoRoute(
+            path: '/recurring',
+            builder: (context, state) => const RecurringTemplatesScreen(),
           ),
         ],
       ),

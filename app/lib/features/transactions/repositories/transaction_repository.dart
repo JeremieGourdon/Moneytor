@@ -74,6 +74,34 @@ class TransactionRepository {
     );
     return row?['total'] ?? 0;
   }
+
+  /// Updates a transaction's status and date (used for clearing pending transactions).
+  Future<void> clearTransaction(String id) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await _db.execute(
+      "UPDATE transactions SET status = 'cleared', transaction_date = ?, updated_at = ? WHERE id = ?",
+      [now, now, id],
+    );
+  }
+
+  /// Soft deletes a transaction.
+  Future<void> deleteTransaction(String id) async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    await _db.execute(
+      "UPDATE transactions SET deleted_at = ?, updated_at = ? WHERE id = ?",
+      [now, now, id],
+    );
+  }
+
+  /// Streams pending transactions for the household.
+  Stream<List<TransactionModel>> watchPendingTransactions(String householdId) {
+    return _db
+        .watch(
+          "SELECT * FROM transactions WHERE household_id = ? AND status = 'pending' AND deleted_at IS NULL ORDER BY transaction_date ASC",
+          [householdId],
+        )
+        .map((rows) => rows.map((row) => TransactionModel.fromJson(row)).toList());
+  }
 }
 
 @Riverpod(keepAlive: true)

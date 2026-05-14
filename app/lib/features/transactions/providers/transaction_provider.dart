@@ -10,6 +10,16 @@ import '../repositories/transaction_repository.dart';
 
 part 'transaction_provider.g.dart';
 
+@Riverpod(keepAlive: true)
+Stream<List<TransactionModel>> pendingTransactions(Ref ref) {
+  final household = ref.watch(householdProvider).value;
+  if (household == null) return Stream.value([]);
+
+  return ref
+      .watch(transactionRepositoryProvider)
+      .watchPendingTransactions(household.id);
+}
+
 @riverpod
 class TransactionNotifier extends _$TransactionNotifier {
   @override
@@ -43,6 +53,14 @@ class TransactionNotifier extends _$TransactionNotifier {
     );
 
     await ref.read(transactionRepositoryProvider).createTransaction(tx);
+  }
+
+  Future<void> clearTransaction(String id) async {
+    await ref.read(transactionRepositoryProvider).clearTransaction(id);
+  }
+
+  Future<void> deleteTransaction(String id) async {
+    await ref.read(transactionRepositoryProvider).deleteTransaction(id);
   }
 }
 
