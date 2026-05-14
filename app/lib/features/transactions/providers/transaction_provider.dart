@@ -18,6 +18,7 @@ class TransactionNotifier extends _$TransactionNotifier {
   Future<void> addTransaction({
     required String accountId,
     required String budgetId,
+    String? projectId,
     required int amount, // in cents
     required bool isExpense,
     String? note,
@@ -31,6 +32,7 @@ class TransactionNotifier extends _$TransactionNotifier {
       householdId: household.id,
       accountId: accountId,
       budgetId: budgetId,
+      projectId: projectId,
       createdBy: user.id,
       amount: isExpense ? -amount.abs() : amount.abs(),
       transactionDate: DateTime.now().toUtc(),

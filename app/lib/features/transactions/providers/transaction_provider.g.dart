@@ -172,4 +172,4 @@ final class TotalDisposableIncomeProvider
 }
 
 String _$totalDisposableIncomeHash() =>
-    r'2229c2824b93ce273c045e2c2a517c1a8db493d1';
+    r'ae0bd54e598748f8197e808eb8f12c463c1e2129';

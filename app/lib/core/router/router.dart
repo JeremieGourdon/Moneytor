@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/providers/profile_provider.dart';
 import '../../features/auth/views/login_screen.dart';
+import '../../features/projects/views/projects_screen.dart';
 import '../../features/auth/views/profile_screen.dart';
 import '../../features/household/views/household_setup_screen.dart';
 import '../../features/accounts/views/accounts_screen.dart';
@@ -69,9 +69,7 @@ GoRouter router(Ref ref) {
           ),
           GoRoute(
             path: '/projects',
-            builder: (context, state) => const Scaffold(
-              body: Center(child: Text('Projects Placeholder')),
-            ),
+            builder: (context, state) => const ProjectsScreen(),
           ),
           GoRoute(
             path: '/profile',
