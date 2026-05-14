@@ -19,9 +19,7 @@ class BudgetsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedAccount = ref.watch(selectedAccountProvider);
-    final budgetsAsync = selectedAccount != null
-        ? ref.watch(accountBudgetsProvider(selectedAccount.id))
-        : const AsyncValue.data(<BudgetModel>[]);
+    final allBudgetsAsync = ref.watch(allBudgetsProvider);
     
     final accountsAsync = ref.watch(accountsProvider);
     final currency = ref.watch(householdProvider).value?.currency ?? 'EUR';
@@ -40,9 +38,7 @@ class BudgetsScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(accountsProvider);
-          if (selectedAccount != null) {
-            ref.invalidate(accountBudgetsProvider(selectedAccount.id));
-          }
+          ref.invalidate(allBudgetsProvider);
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -69,32 +65,40 @@ class BudgetsScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    budgetsAsync.when(
-                      data: (budgets) => budgets.isEmpty
-                          ? const Center(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 32.0),
-                                child: Text(
-                                  'No budgets for this account.',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
+                    allBudgetsAsync.when(
+                      data: (allBudgets) {
+                        final budgets = selectedAccount != null
+                            ? allBudgets.where((b) => b.accountId == selectedAccount.id).toList()
+                            : <BudgetModel>[];
+
+                        if (budgets.isEmpty) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 32.0),
+                              child: Text(
+                                'No budgets for this account.',
+                                style: TextStyle(color: Colors.grey),
                               ),
-                            )
-                          : ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: budgets.length,
-                              separatorBuilder: (_, _) => const SizedBox(height: 12),
-                              itemBuilder: (context, index) {
-                                final budget = budgets[index];
-                                return _buildBudgetCard(
-                                  context,
-                                  ref,
-                                  budget,
-                                  formatter,
-                                );
-                              },
                             ),
+                          );
+                        }
+
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: budgets.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final budget = budgets[index];
+                            return _buildBudgetCard(
+                              context,
+                              ref,
+                              budget,
+                              formatter,
+                            );
+                          },
+                        );
+                      },
                       loading: () => const Center(
                         child: CircularProgressIndicator(color: Colors.black),
                       ),

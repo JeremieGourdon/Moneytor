@@ -4,27 +4,26 @@ import 'account_provider.dart';
 
 part 'selected_account_provider.g.dart';
 
-@riverpod
-class SelectedAccount extends _$SelectedAccount {
+@Riverpod(keepAlive: true)
+class SelectedAccountId extends _$SelectedAccountId {
   @override
-  AccountModel? build() {
-    final allAccounts = ref.watch(accountsProvider).value;
-    if (allAccounts == null || allAccounts.isEmpty) return null;
+  String? build() => null;
 
-    // If we already have a state, try to keep it if it's still valid
-    if (state != null) {
-      final stillExists = allAccounts.any((a) => a.id == state!.id);
-      if (stillExists) return state;
-    }
+  void select(String id) => state = id;
+}
 
-    // Default to the first default account, or just the first account
-    return allAccounts.firstWhere(
-      (a) => a.isDefault,
-      orElse: () => allAccounts.first,
-    );
+@Riverpod(keepAlive: true)
+AccountModel? selectedAccount(Ref ref) {
+  final accounts = ref.watch(accountsProvider).value ?? [];
+  if (accounts.isEmpty) return null;
+
+  final selectedId = ref.watch(selectedAccountIdProvider);
+
+  if (selectedId != null) {
+    final match = accounts.where((a) => a.id == selectedId).firstOrNull;
+    if (match != null) return match;
   }
 
-  void select(AccountModel account) {
-    state = account;
-  }
+  // Fallback to default or first account
+  return accounts.where((a) => a.isDefault).firstOrNull ?? accounts.firstOrNull;
 }

@@ -4,6 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/project_model.dart';
 import '../../household/providers/household_provider.dart';
+import '../../accounts/providers/account_provider.dart';
 import '../../accounts/providers/selected_account_provider.dart';
 import '../../../shared/widgets/account_selector_dropdown.dart';
 import '../providers/project_provider.dart';
@@ -14,9 +15,7 @@ class ProjectsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedAccount = ref.watch(selectedAccountProvider);
-    final projectsAsync = selectedAccount != null
-        ? ref.watch(accountProjectsProvider(selectedAccount.id))
-        : const AsyncValue.data(<ProjectModel>[]);
+    final allProjectsAsync = ref.watch(allProjectsProvider);
 
     final accountsAsync = ref.watch(accountsProvider);
     final currency = ref.watch(householdProvider).value?.currency ?? 'EUR';
@@ -41,8 +40,12 @@ class ProjectsScreen extends ConsumerWidget {
           const AccountSelectorDropdown(),
           const SizedBox(height: 16),
           Expanded(
-            child: projectsAsync.when(
-              data: (projects) {
+            child: allProjectsAsync.when(
+              data: (allProjects) {
+                final projects = selectedAccount != null
+                    ? allProjects.where((p) => p.accountId == selectedAccount.id).toList()
+                    : <ProjectModel>[];
+
                 if (projects.isEmpty) {
                   return Center(
                     child: Column(

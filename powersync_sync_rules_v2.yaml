@@ -1,8 +1,7 @@
 # Moneytor PowerSync Sync Rules (Complete & Robust)
 bucket_definitions:
   # 1. User Profile & Private Data
-  # This bucket is assigned directly to the user by their ID.
-  # It contains their own user record and their private accounts/transactions.
+  # assigned directly by token_id()
   user_private_data:
     parameters:
       - user_id
@@ -11,6 +10,17 @@ bucket_definitions:
         select: SELECT * FROM users WHERE id = :user_id
       - table: accounts
         select: SELECT * FROM accounts WHERE owner_id = :user_id AND is_public = FALSE
+      # Redundant sync for budgets/projects linked to private accounts
+      - table: budgets
+        select: |
+          SELECT b.* FROM budgets b
+          JOIN accounts a ON b.account_id = a.id
+          WHERE a.owner_id = :user_id AND a.is_public = FALSE
+      - table: projects
+        select: |
+          SELECT p.* FROM projects p
+          JOIN accounts a ON p.account_id = a.id
+          WHERE a.owner_id = :user_id AND a.is_public = FALSE
       - table: transactions
         select: |
           SELECT t.* FROM transactions t
@@ -20,8 +30,7 @@ bucket_definitions:
         select: SELECT * FROM notifications WHERE user_id = :user_id
 
   # 2. Shared Household Bucket
-  # Contains data that everyone in the household can see.
-  # This bucket is assigned based on the household_id found in the users table.
+  # assigned by household_id in public.users
   household_data:
     parameters:
       - household_id
@@ -50,11 +59,9 @@ bucket_definitions:
 
 # Map users to their respective buckets
 bucket_assignments:
-  # 1. Assign the user to their private data bucket (Immediate)
   - bucket: user_private_data
     select: SELECT token_id() as user_id
   
-  # 2. Assign users to their household buckets (Depends on users table)
   - bucket: household_data
     select: |
       SELECT household_id FROM public.users WHERE id = token_id()

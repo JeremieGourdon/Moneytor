@@ -90,7 +90,7 @@ class AccountSelectorDropdown extends ConsumerWidget {
                                 width: 20,
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               ),
-                              error: (_, __) => const Text('---'),
+                              error: (_, ___) => const Text('---'),
                             );
                           },
                         ),
@@ -108,7 +108,7 @@ class AccountSelectorDropdown extends ConsumerWidget {
         padding: EdgeInsets.symmetric(horizontal: 24.0),
         child: Center(child: CircularProgressIndicator(color: Colors.black)),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, ___) => const SizedBox.shrink(),
     );
   }
 
@@ -175,7 +175,7 @@ class _AccountPickerSheet extends ConsumerWidget {
               shrinkWrap: true,
               padding: const EdgeInsets.symmetric(horizontal: 24),
               itemCount: accounts.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, ___) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final account = accounts[index];
                 final isSelected = selectedAccount?.id == account.id;
@@ -183,7 +183,7 @@ class _AccountPickerSheet extends ConsumerWidget {
 
                 return InkWell(
                   onTap: () {
-                    ref.read(selectedAccountProvider.notifier).select(account);
+                    ref.read(selectedAccountIdProvider.notifier).select(account.id);
                     Navigator.pop(context);
                   },
                   borderRadius: BorderRadius.circular(12),
@@ -226,7 +226,7 @@ class _AccountPickerSheet extends ConsumerWidget {
                                   ),
                                 ),
                                 loading: () => const SizedBox.shrink(),
-                                error: (_, __) => const SizedBox.shrink(),
+                                error: (_, ___) => const SizedBox.shrink(),
                               ),
                             ],
                           ),
@@ -245,3 +245,4 @@ class _AccountPickerSheet extends ConsumerWidget {
     );
   }
 }
+
