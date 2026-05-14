@@ -35,7 +35,7 @@ class AccountNotifier extends _$AccountNotifier {
     if (!ref.mounted) return;
 
     if (currentAccounts.isEmpty) {
-      await createAccount('Current Account');
+      await createAccount('Current Account', isDefault: true);
     }
   }
 
@@ -44,6 +44,7 @@ class AccountNotifier extends _$AccountNotifier {
     String type = 'checking',
     bool isPublic = false,
     int initialBalance = 0,
+    bool isDefault = false,
   }) async {
     final household = await ref.read(householdProvider.future);
     if (!ref.mounted) return;
@@ -61,6 +62,7 @@ class AccountNotifier extends _$AccountNotifier {
       name: name,
       type: type,
       isPublic: isPublic,
+      isDefault: isDefault,
       createdAt: now,
       updatedAt: now,
     );
@@ -70,11 +72,11 @@ class AccountNotifier extends _$AccountNotifier {
 
     if (!ref.mounted) return;
 
-    // 1. Automatically create the "Unplanned" system budget for this account
+    // 1. Automatically create the "Unplanned" default budget for this account
     // This is required by the business logic for unsorted transactions.
     final budgetId = const Uuid().v4();
     await repo.execute(
-      'INSERT INTO budgets (id, household_id, account_id, name, default_amount, icon, color, is_system, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO budgets (id, household_id, account_id, name, default_amount, icon, color, is_default, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         budgetId,
         household.id,
@@ -83,12 +85,27 @@ class AccountNotifier extends _$AccountNotifier {
         0,
         'help-circle',
         '#71717A',
-        1, // is_system = true
+        1, // is_default
         now.toIso8601String(),
         now.toIso8601String(),
       ],
     );
 
+    // 2. If it's a savings account, automatically create a "Monthly Saving" project
+    if (type == 'savings') {
+      await repo.execute(
+        'INSERT INTO projects (id, household_id, name, target_amount, is_pinned_to_dashboard, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [
+          const Uuid().v4(),
+          household.id,
+          'Épargne Mensuelle - $name',
+          '0',
+          0,
+          now.toIso8601String(),
+          now.toIso8601String(),
+        ],
+      );
+    }
     // 2. If initial balance is set, create a reconciliation transaction
     if (initialBalance != 0) {
       await repo.execute(
@@ -116,8 +133,17 @@ class AccountNotifier extends _$AccountNotifier {
     await ref.read(accountRepositoryProvider).updateAccountName(id, name);
   }
 
-  Future<void> deleteAccount(String id) async {
-    await ref.read(accountRepositoryProvider).deleteAccount(id);
+  Future<void> deleteAccount(AccountModel account) async {
+    if (account.isDefault) {
+      throw Exception('Impossible de supprimer le compte par défaut.');
+    }
+    await ref.read(accountRepositoryProvider).deleteAccount(account.id);
+  }
+
+  Future<void> setAsDefault(AccountModel account) async {
+    await ref
+        .read(accountRepositoryProvider)
+        .setAsDefault(account.id, account.householdId);
   }
 
   Future<void> togglePrivacy(AccountModel account) async {

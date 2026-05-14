@@ -14,7 +14,11 @@ class AccountModel {
   @SQLiteBoolConverter()
   final bool isPublic;
 
+  @SQLiteBoolConverter()
+  final bool isDefault;
+
   final DateTime createdAt;
+
   final DateTime updatedAt;
   final DateTime? deletedAt;
 
@@ -25,6 +29,7 @@ class AccountModel {
     required this.name,
     this.type = 'checking',
     this.isPublic = true,
+    this.isDefault = false,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -35,7 +40,12 @@ class AccountModel {
 
   Map<String, dynamic> toJson() => _$AccountModelToJson(this);
 
-  AccountModel copyWith({String? name, String? type, bool? isPublic}) {
+  AccountModel copyWith({
+    String? name,
+    String? type,
+    bool? isPublic,
+    bool? isDefault,
+  }) {
     return AccountModel(
       id: id,
       householdId: householdId,
@@ -43,6 +53,7 @@ class AccountModel {
       name: name ?? this.name,
       type: type ?? this.type,
       isPublic: isPublic ?? this.isPublic,
+      isDefault: isDefault ?? this.isDefault,
       createdAt: createdAt,
       updatedAt: DateTime.now().toUtc(),
       deletedAt: deletedAt,

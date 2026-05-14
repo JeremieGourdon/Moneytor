@@ -534,6 +534,8 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
                   _showEditAccountDialog(context, ref, account);
                 } else if (val == 'delete') {
                   _showDeleteConfirmation(context, ref, account);
+                } else if (val == 'default') {
+                  ref.read(accountProvider.notifier).setAsDefault(account);
                 }
               },
               itemBuilder: (context) => [
@@ -547,16 +549,28 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
                     ],
                   ),
                 ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(LucideIcons.trash_2, size: 16, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete', style: TextStyle(color: Colors.red)),
-                    ],
+                if (!account.isDefault)
+                  const PopupMenuItem(
+                    value: 'default',
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.circle_check, size: 16),
+                        SizedBox(width: 8),
+                        Text('Set as Default'),
+                      ],
+                    ),
                   ),
-                ),
+                if (!account.isDefault)
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.trash_2, size: 16, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Delete', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ],
@@ -626,7 +640,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
             onPressed: () async {
               await ref
                   .read(accountProvider.notifier)
-                  .deleteAccount(account.id);
+                  .deleteAccount(account);
               if (context.mounted) Navigator.pop(context);
             },
             child: const Text('DELETE', style: TextStyle(color: Colors.red)),

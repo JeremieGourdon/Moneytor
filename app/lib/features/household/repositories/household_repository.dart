@@ -67,6 +67,7 @@ class HouseholdRepository {
       'name': 'Current Account',
       'type': 'checking',
       'is_public': false,
+      'is_default': true,
     });
 
     // 5. Initialize "Unplanned" System Budget for this account
@@ -79,7 +80,7 @@ class HouseholdRepository {
       'default_amount': 0,
       'icon': 'help-circle',
       'color': '#71717A',
-      'is_system': true,
+      'is_default': true,
     });
 
     return household;

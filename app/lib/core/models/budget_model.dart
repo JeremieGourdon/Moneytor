@@ -14,7 +14,7 @@ class BudgetModel {
   final String? color;
 
   @SQLiteBoolConverter()
-  final bool isSystem;
+  final bool isDefault;
 
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -28,7 +28,7 @@ class BudgetModel {
     required this.defaultAmount,
     this.icon,
     this.color,
-    this.isSystem = false,
+    this.isDefault = false,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,

@@ -31,6 +31,7 @@ const Schema schema = Schema([
     Column.text('name'),
     Column.text('type'),
     Column.integer('is_public'), // SQLite uses integer for booleans
+    Column.integer('is_default'),
     Column.text('created_at'),
     Column.text('updated_at'),
     Column.text('deleted_at'),
@@ -42,7 +43,7 @@ const Schema schema = Schema([
     Column.text('default_amount'), // BIGINT stored as text/integer in SQLite
     Column.text('icon'),
     Column.text('color'),
-    Column.integer('is_system'),
+    Column.integer('is_default'),
     Column.text('created_at'),
     Column.text('updated_at'),
     Column.text('deleted_at'),

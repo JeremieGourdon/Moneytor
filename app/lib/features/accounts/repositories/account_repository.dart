@@ -29,7 +29,7 @@ class AccountRepository {
   /// Creates a new account.
   Future<void> createAccount(AccountModel account) async {
     await _db.execute(
-      'INSERT INTO accounts (id, household_id, owner_id, name, type, is_public, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO accounts (id, household_id, owner_id, name, type, is_public, is_default, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         account.id,
         account.householdId,
@@ -37,9 +37,22 @@ class AccountRepository {
         account.name,
         account.type,
         account.isPublic ? 1 : 0,
+        account.isDefault ? 1 : 0,
         account.createdAt.toIso8601String(),
         account.updatedAt.toIso8601String(),
       ],
+    );
+  }
+
+  /// Sets an account as the default for its household.
+  Future<void> setAsDefault(String accountId, String householdId) async {
+    await _db.execute(
+      'UPDATE accounts SET is_default = 0, updated_at = ? WHERE household_id = ? AND is_default = 1',
+      [DateTime.now().toUtc().toIso8601String(), householdId],
+    );
+    await _db.execute(
+      'UPDATE accounts SET is_default = 1, updated_at = ? WHERE id = ?',
+      [DateTime.now().toUtc().toIso8601String(), accountId],
     );
   }
 

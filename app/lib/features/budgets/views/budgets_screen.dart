@@ -115,12 +115,85 @@ class BudgetsScreen extends ConsumerWidget {
           'Monthly: ${formatter.format(budget.defaultAmount / 100.0)}',
           style: const TextStyle(fontSize: 12),
         ),
-        trailing: const Icon(
-          LucideIcons.chevron_right,
-          size: 16,
-          color: Colors.grey,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (budget.isDefault)
+              const Icon(LucideIcons.circle_check, size: 16, color: Colors.green),
+            const SizedBox(width: 8),
+            PopupMenuButton<String>(
+              icon: const Icon(LucideIcons.ellipsis_vertical, size: 18),
+              onSelected: (val) {
+                if (val == 'default') {
+                  ref.read(budgetProvider.notifier).setAsDefault(budget);
+                } else if (val == 'delete') {
+                  _showDeleteConfirmation(context, ref, budget);
+                }
+              },
+              itemBuilder: (context) => [
+                if (!budget.isDefault)
+                  const PopupMenuItem(
+                    value: 'default',
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.circle_check, size: 16),
+                        SizedBox(width: 8),
+                        Text('Set as Default'),
+                      ],
+                    ),
+                  ),
+                if (!budget.isDefault)
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.trash_2, size: 16, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Delete', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const Icon(
+              LucideIcons.chevron_right,
+              size: 16,
+              color: Colors.grey,
+            ),
+          ],
         ),
         onTap: () => context.go('/budgets/detail', extra: budget),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(
+    BuildContext context,
+    WidgetRef ref,
+    BudgetModel budget,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('DELETE BUDGET?'),
+        content: Text(
+          'Are you sure you want to delete "${budget.name}"? Transactions using this budget will need to be re-assigned.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await ref
+                  .read(budgetProvider.notifier)
+                  .deleteBudget(budget);
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('DELETE', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
     );
   }

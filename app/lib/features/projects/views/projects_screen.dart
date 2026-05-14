@@ -237,7 +237,7 @@ class _ProjectCard extends ConsumerWidget {
                     margin: const EdgeInsets.only(top: 16),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withValues(alpha: 0.03),
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(color: Colors.black12),
                     ),

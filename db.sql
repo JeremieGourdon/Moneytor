@@ -65,6 +65,7 @@ CREATE TABLE accounts (
     name VARCHAR NOT NULL,
     type account_type DEFAULT 'checking',
     is_public BOOLEAN DEFAULT true,
+    is_default BOOLEAN DEFAULT false,
     CONSTRAINT joint_must_be_public CHECK (
         (owner_id IS NULL AND is_public IS TRUE) OR (owner_id IS NOT NULL)
     ),
@@ -82,7 +83,7 @@ CREATE TABLE budgets (
     default_amount BIGINT NOT NULL DEFAULT 0,
     icon VARCHAR, -- Lucide icon identifier
     color VARCHAR, -- Hex code
-    is_system BOOLEAN DEFAULT false,
+    is_default BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     deleted_at TIMESTAMP WITH TIME ZONE NULL

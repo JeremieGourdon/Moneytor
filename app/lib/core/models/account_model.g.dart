@@ -15,6 +15,9 @@ AccountModel _$AccountModelFromJson(Map<String, dynamic> json) => AccountModel(
   isPublic: json['is_public'] == null
       ? true
       : const SQLiteBoolConverter().fromJson(json['is_public']),
+  isDefault: json['is_default'] == null
+      ? false
+      : const SQLiteBoolConverter().fromJson(json['is_default']),
   createdAt: DateTime.parse(json['created_at'] as String),
   updatedAt: DateTime.parse(json['updated_at'] as String),
   deletedAt: json['deleted_at'] == null
@@ -30,6 +33,7 @@ Map<String, dynamic> _$AccountModelToJson(AccountModel instance) =>
       'name': instance.name,
       'type': instance.type,
       'is_public': const SQLiteBoolConverter().toJson(instance.isPublic),
+      'is_default': const SQLiteBoolConverter().toJson(instance.isDefault),
       'created_at': instance.createdAt.toIso8601String(),
       'updated_at': instance.updatedAt.toIso8601String(),
       'deleted_at': instance.deletedAt?.toIso8601String(),
