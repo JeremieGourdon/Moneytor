@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/models/project_model.dart';
@@ -9,6 +10,7 @@ part 'project_provider.g.dart';
 @Riverpod(keepAlive: true)
 Stream<List<ProjectModel>> allProjects(Ref ref) {
   final household = ref.watch(householdProvider).value;
+  developer.log('allProjectsProvider: household is ${household?.id}', name: 'project.provider');
   if (household == null) return Stream.value([]);
 
   return ref.watch(projectRepositoryProvider).watchProjects(household.id);

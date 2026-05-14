@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/database/database_service.dart';
 import '../../../core/models/project_model.dart';
@@ -9,14 +10,27 @@ class ProjectRepository {
 
   ProjectRepository(this._db);
 
-  /// Streams all projects for the household.
   Stream<List<ProjectModel>> watchProjects(String householdId) {
+    developer.log('Watching projects for household: $householdId', name: 'project.repository');
     return _db
         .watch(
           'SELECT * FROM projects WHERE household_id = ? AND deleted_at IS NULL',
           [householdId],
         )
-        .map((rows) => rows.map((row) => ProjectModel.fromJson(row)).toList());
+        .map((rows) {
+          developer.log('Received ${rows.length} projects from SQLite for $householdId', name: 'project.repository');
+          for (final row in rows) {
+             developer.log('Project: ${row['name']} (ID: ${row['id']}, AccID: ${row['account_id']})', name: 'project.repository');
+          }
+          return rows.map((row) {
+            try {
+              return ProjectModel.fromJson(row);
+            } catch (e) {
+              developer.log('Error parsing project row: $e', name: 'project.repository', error: e);
+              rethrow;
+            }
+          }).toList();
+        });
   }
 
   /// Streams projects for a specific account.

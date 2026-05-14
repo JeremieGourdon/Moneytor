@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -42,9 +43,19 @@ class ProjectsScreen extends ConsumerWidget {
           Expanded(
             child: allProjectsAsync.when(
               data: (allProjects) {
+                developer.log('PROJECTS SCREEN: Received ${allProjects.length} total projects from provider', name: 'project.ui');
+                
                 final projects = selectedAccount != null
-                    ? allProjects.where((p) => p.accountId == selectedAccount.id).toList()
+                    ? allProjects.where((p) {
+                        final match = p.accountId == selectedAccount.id;
+                        if (!match) {
+                          developer.log('PROJECTS SCREEN: Filtering out project ${p.name} (AccID: ${p.accountId}) vs Selected: ${selectedAccount.id}', name: 'project.ui');
+                        }
+                        return match;
+                      }).toList()
                     : <ProjectModel>[];
+
+                developer.log('PROJECTS SCREEN: Displaying ${projects.length} projects for account ${selectedAccount?.name}', name: 'project.ui');
 
                 if (projects.isEmpty) {
                   return Center(

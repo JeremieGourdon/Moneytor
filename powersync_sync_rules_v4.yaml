@@ -1,0 +1,102 @@
+# Moneytor PowerSync Sync Rules (Modern Sync Streams)
+# Documentation: https://docs.powersync.com/sync/streams/overview
+
+streams:
+  # 1. USER CONTEXT STREAM
+  # Contains the user profile and their own data.
+  user_context:
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM users WHERE id = token_id() AND deleted_at IS NULL
+      - SELECT * FROM notifications WHERE user_id = token_id() AND deleted_at IS NULL
+
+  # 2. HOUSEHOLD CONTEXT STREAM
+  # Relational sync for households, accounts, budgets, and projects.
+  # This uses subqueries to ensure data is delivered as a coherent graph.
+  household_context:
+    auto_subscribe: true
+    queries:
+      # Sync households linked to the user
+      - |
+        SELECT * FROM households 
+        WHERE id IN (
+          SELECT household_id FROM users WHERE id = token_id()
+          UNION
+          SELECT shared_household_id FROM users WHERE id = token_id()
+        )
+        AND deleted_at IS NULL
+
+      # Sync accounts (Own accounts + Public accounts in user's households)
+      - |
+        SELECT * FROM accounts 
+        WHERE (
+          owner_id = token_id() 
+          OR (is_public = TRUE AND household_id IN (
+            SELECT household_id FROM users WHERE id = token_id()
+            UNION
+            SELECT shared_household_id FROM users WHERE id = token_id()
+          ))
+        )
+        AND deleted_at IS NULL
+
+      # Sync budgets linked to user's households
+      - |
+        SELECT * FROM budgets 
+        WHERE household_id IN (
+          SELECT household_id FROM users WHERE id = token_id()
+          UNION
+          SELECT shared_household_id FROM users WHERE id = token_id()
+        )
+        AND deleted_at IS NULL
+
+      # Sync projects linked to user's households
+      - |
+        SELECT * FROM projects 
+        WHERE household_id IN (
+          SELECT household_id FROM users WHERE id = token_id()
+          UNION
+          SELECT shared_household_id FROM users WHERE id = token_id()
+        )
+        AND deleted_at IS NULL
+
+      # Sync transactions (Must follow accounts)
+      - |
+        SELECT * FROM transactions 
+        WHERE account_id IN (
+          SELECT id FROM accounts 
+          WHERE owner_id = token_id()
+          OR (is_public = TRUE AND household_id IN (
+            SELECT household_id FROM users WHERE id = token_id()
+            UNION
+            SELECT shared_household_id FROM users WHERE id = token_id()
+          ))
+        )
+        AND deleted_at IS NULL
+
+      # Sync categories, financial periods, and templates
+      - |
+        SELECT * FROM categories 
+        WHERE household_id IN (
+          SELECT household_id FROM users WHERE id = token_id()
+          UNION
+          SELECT shared_household_id FROM users WHERE id = token_id()
+        )
+        AND deleted_at IS NULL
+
+      - |
+        SELECT * FROM financial_periods 
+        WHERE household_id IN (
+          SELECT household_id FROM users WHERE id = token_id()
+          UNION
+          SELECT shared_household_id FROM users WHERE id = token_id()
+        )
+        AND deleted_at IS NULL
+
+      - |
+        SELECT * FROM recurring_templates 
+        WHERE household_id IN (
+          SELECT household_id FROM users WHERE id = token_id()
+          UNION
+          SELECT shared_household_id FROM users WHERE id = token_id()
+        )
+        AND deleted_at IS NULL

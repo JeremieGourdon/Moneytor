@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -67,9 +68,19 @@ class BudgetsScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
                     allBudgetsAsync.when(
                       data: (allBudgets) {
+                        developer.log('BUDGETS SCREEN: Received ${allBudgets.length} total budgets from provider', name: 'budget.ui');
+                        
                         final budgets = selectedAccount != null
-                            ? allBudgets.where((b) => b.accountId == selectedAccount.id).toList()
+                            ? allBudgets.where((b) {
+                                final match = b.accountId == selectedAccount.id;
+                                if (!match) {
+                                  developer.log('BUDGETS SCREEN: Filtering out budget ${b.name} (AccID: ${b.accountId}) vs Selected: ${selectedAccount.id}', name: 'budget.ui');
+                                }
+                                return match;
+                              }).toList()
                             : <BudgetModel>[];
+
+                        developer.log('BUDGETS SCREEN: Displaying ${budgets.length} budgets for account ${selectedAccount?.name}', name: 'budget.ui');
 
                         if (budgets.isEmpty) {
                           return const Center(
