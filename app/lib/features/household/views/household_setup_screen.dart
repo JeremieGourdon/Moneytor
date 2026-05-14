@@ -6,7 +6,8 @@ class HouseholdSetupScreen extends ConsumerStatefulWidget {
   const HouseholdSetupScreen({super.key});
 
   @override
-  ConsumerState<HouseholdSetupScreen> createState() => _HouseholdSetupScreenState();
+  ConsumerState<HouseholdSetupScreen> createState() =>
+      _HouseholdSetupScreenState();
 }
 
 class _HouseholdSetupScreenState extends ConsumerState<HouseholdSetupScreen> {
@@ -25,7 +26,9 @@ class _HouseholdSetupScreenState extends ConsumerState<HouseholdSetupScreen> {
     if (_nameController.text.isEmpty) return;
     setState(() => _isLoading = true);
     try {
-      await ref.read(householdProvider.notifier).createHousehold(_nameController.text);
+      await ref
+          .read(householdProvider.notifier)
+          .createHousehold(_nameController.text);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -41,7 +44,9 @@ class _HouseholdSetupScreenState extends ConsumerState<HouseholdSetupScreen> {
     if (_tokenController.text.isEmpty) return;
     setState(() => _isLoading = true);
     try {
-      await ref.read(householdProvider.notifier).acceptInvitation(_tokenController.text);
+      await ref
+          .read(householdProvider.notifier)
+          .acceptInvitation(_tokenController.text);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -78,7 +83,10 @@ class _HouseholdSetupScreenState extends ConsumerState<HouseholdSetupScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _isLoading ? null : _handleCreate,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('CREATE HOUSEHOLD'),
             ),
             const SizedBox(height: 48),

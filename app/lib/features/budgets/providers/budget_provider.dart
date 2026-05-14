@@ -5,7 +5,7 @@ import '../repositories/budget_repository.dart';
 
 part 'budget_provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<List<BudgetModel>> allBudgets(Ref ref) {
   final household = ref.watch(householdProvider).value;
   if (household == null) return Stream.value([]);

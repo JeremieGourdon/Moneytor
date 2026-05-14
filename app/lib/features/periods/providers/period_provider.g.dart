@@ -28,7 +28,7 @@ final class CurrentPeriodProvider
         argument: null,
         retry: null,
         name: r'currentPeriodProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -48,7 +48,7 @@ final class CurrentPeriodProvider
   }
 }
 
-String _$currentPeriodHash() => r'8222ce886c4722ed0aec58ab8d0d54ec15974b33';
+String _$currentPeriodHash() => r'a6f67fd9bfb711143bf2887165f2ace47f203f51';
 
 @ProviderFor(allPeriods)
 final allPeriodsProvider = AllPeriodsProvider._();
@@ -115,7 +115,7 @@ final class PeriodNotifierProvider
   PeriodNotifier create() => PeriodNotifier();
 }
 
-String _$periodNotifierHash() => r'63c98fd55776ba5e8f4f704068f0bd0f48bff5e1';
+String _$periodNotifierHash() => r'815a1b4513778237b74a945f76287bfd2a5e2b6b';
 
 abstract class _$PeriodNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

@@ -11,10 +11,12 @@ class CategoryRepository {
 
   /// Streams all categories for the household.
   Stream<List<CategoryModel>> watchCategories(String householdId) {
-    return _db.watch(
-      'SELECT * FROM categories WHERE household_id = ? AND deleted_at IS NULL',
-      [householdId],
-    ).map((rows) => rows.map((row) => CategoryModel.fromJson(row)).toList());
+    return _db
+        .watch(
+          'SELECT * FROM categories WHERE household_id = ? AND deleted_at IS NULL',
+          [householdId],
+        )
+        .map((rows) => rows.map((row) => CategoryModel.fromJson(row)).toList());
   }
 
   /// Creates a new category.
@@ -24,8 +26,11 @@ class CategoryRepository {
         id, household_id, name, icon, color, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?)''',
       [
-        category.id, category.householdId, category.name, 
-        category.icon, category.color,
+        category.id,
+        category.householdId,
+        category.name,
+        category.icon,
+        category.color,
         category.createdAt.toIso8601String(),
         category.updatedAt.toIso8601String(),
       ],

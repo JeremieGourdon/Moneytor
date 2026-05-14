@@ -33,23 +33,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       if (_isSignUp) {
-        await ref.read(authStateProvider.notifier).signUp(
-              _emailController.text,
-              _passwordController.text,
-            );
+        await ref
+            .read(authStateProvider.notifier)
+            .signUp(_emailController.text, _passwordController.text);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Account created! Please check your email to confirm.'),
+              content: Text(
+                'Account created! Please check your email to confirm.',
+              ),
               backgroundColor: Colors.black,
             ),
           );
         }
       } else {
-        await ref.read(authStateProvider.notifier).signIn(
-              _emailController.text,
-              _passwordController.text,
-            );
+        await ref
+            .read(authStateProvider.notifier)
+            .signIn(_emailController.text, _passwordController.text);
       }
     } catch (e) {
       _showError(e.toString());
@@ -66,9 +66,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(authStateProvider.notifier).signInWithMagicLink(
-            _emailController.text,
-          );
+      await ref
+          .read(authStateProvider.notifier)
+          .signInWithMagicLink(_emailController.text);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -127,7 +127,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 textAlign: TextAlign.center,
               ),
               const Spacer(),
-              
+
               // Login Fields
               _buildTextField(
                 controller: _emailController,
@@ -144,7 +144,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 isPassword: true,
               ),
               const SizedBox(height: 24),
-              
+
               // Primary Action
               ElevatedButton(
                 onPressed: _isLoading ? null : _handleAuth,
@@ -174,20 +174,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
               ),
-              
+
               const SizedBox(height: 16),
 
               // Toggle Login/SignUp
               TextButton(
                 onPressed: () => setState(() => _isSignUp = !_isSignUp),
                 child: Text(
-                  _isSignUp ? 'Already have an account? Login' : 'Need an account? Sign Up',
+                  _isSignUp
+                      ? 'Already have an account? Login'
+                      : 'Need an account? Sign Up',
                   style: const TextStyle(color: Colors.black, fontSize: 13),
                 ),
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Magic Link Action
               OutlinedButton(
                 onPressed: _isLoading ? null : _handleMagicLink,
@@ -200,12 +202,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 child: const Text(
                   'Send Magic Link',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
 
               const SizedBox(height: 32),
-              
+
               // Divider
               Row(
                 children: [
@@ -214,15 +219,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'OR CONTINUE WITH',
-                      style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   Expanded(child: Divider(color: Colors.grey[200])),
                 ],
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Social Auth Placeholders
               Row(
                 children: [
@@ -276,7 +285,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             hintText: hint,
             hintStyle: const TextStyle(color: Color(0xFFA1A1AA)),
             prefixIcon: Icon(icon, size: 18, color: const Color(0xFF71717A)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
             filled: true,
             fillColor: const Color(0xFFF9F9F9),
             border: OutlineInputBorder(
@@ -310,9 +322,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 14),
         side: const BorderSide(color: Color(0xFFE4E4E7)),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }

@@ -71,7 +71,7 @@ final class DisposableIncomeProvider
   }) : super(
          retry: null,
          name: r'disposableIncomeProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -108,7 +108,7 @@ final class DisposableIncomeProvider
   }
 }
 
-String _$disposableIncomeHash() => r'53926f7ade8e404ad530412f5717136bf4eb0f65';
+String _$disposableIncomeHash() => r'bafe42ecc054c91f91fbeeb3c4bdd148d7e9d04a';
 
 /// A provider that calculates the RAV (Disposable Income) for an account.
 
@@ -120,7 +120,7 @@ final class DisposableIncomeFamily extends $Family
         name: r'disposableIncomeProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   /// A provider that calculates the RAV (Disposable Income) for an account.
@@ -136,15 +136,15 @@ final class DisposableIncomeFamily extends $Family
 final totalDisposableIncomeProvider = TotalDisposableIncomeProvider._();
 
 final class TotalDisposableIncomeProvider
-    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
-    with $FutureModifier<int>, $StreamProvider<int> {
+    extends $FunctionalProvider<int, int, int>
+    with $Provider<int> {
   TotalDisposableIncomeProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'totalDisposableIncomeProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -154,14 +154,22 @@ final class TotalDisposableIncomeProvider
 
   @$internal
   @override
-  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
+  $ProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
-  Stream<int> create(Ref ref) {
+  int create(Ref ref) {
     return totalDisposableIncome(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
   }
 }
 
 String _$totalDisposableIncomeHash() =>
-    r'f6a56f51715f1b67009dee37c6b408126c930b6e';
+    r'2229c2824b93ce273c045e2c2a517c1a8db493d1';

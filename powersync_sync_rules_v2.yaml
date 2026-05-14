@@ -1,0 +1,42 @@
+
+# Modern PowerSync Sync Rules (Sync Streams format)
+bucket_definitions:
+  household_data:
+    parameters:
+      - household_id
+    data:
+      - table: households
+        select: SELECT * FROM households WHERE id = ?
+      - table: users
+        select: SELECT * FROM users WHERE household_id = ?
+      - table: projects
+        select: SELECT * FROM projects WHERE household_id = ?
+      - table: categories
+        select: SELECT * FROM categories WHERE household_id = ?
+      - table: financial_periods
+        select: SELECT * FROM financial_periods WHERE household_id = ?
+      - table: notifications
+        select: SELECT * FROM notifications WHERE household_id = ? AND user_id = token_id()
+      - table: budgets
+        select: SELECT * FROM budgets WHERE household_id = ?
+      - table: recurring_templates
+        select: SELECT * FROM recurring_templates WHERE household_id = ?
+      - table: accounts
+        select: SELECT * FROM accounts WHERE household_id = ? AND is_public = TRUE
+      - table: transactions
+        select: |
+          SELECT t.* FROM transactions t
+          JOIN accounts a ON t.account_id = a.id
+          WHERE t.household_id = ? AND a.is_public = TRUE
+
+  user_private_data:
+    parameters:
+      - user_id
+    data:
+      - table: accounts
+        select: SELECT * FROM accounts WHERE owner_id = ? AND is_public = FALSE
+      - table: transactions
+        select: |
+          SELECT t.* FROM transactions t
+          JOIN accounts a ON t.account_id = a.id
+          WHERE a.owner_id = ? AND a.is_public = FALSE

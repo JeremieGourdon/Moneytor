@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
 import '../../../core/models/household_model.dart';
 import '../../../core/models/invitation_model.dart';
 
@@ -24,17 +25,18 @@ class HouseholdRepository {
   }
 
   /// Creates a new household and initializes default data.
-  Future<HouseholdModel> createHousehold(String name, String userId, {int startDay = 1}) async {
+  Future<HouseholdModel> createHousehold(
+    String name,
+    String userId, {
+    int startDay = 1,
+  }) async {
     // 1. Create household
     final householdData = await _supabase
         .from('households')
-        .insert({
-          'name': name,
-          'default_month_start_day': startDay,
-        })
+        .insert({'name': name, 'default_month_start_day': startDay})
         .select()
         .single();
-    
+
     final household = HouseholdModel.fromJson(householdData);
 
     // 2. Update user with household_id
@@ -43,13 +45,41 @@ class HouseholdRepository {
         .update({'household_id': household.id})
         .eq('id', userId);
 
-    // 3. Initialize Default Data
-    await _supabase.from('categories').insert({
+    // 3. Initialize Default Financial Period
+    final now = DateTime.now().toUtc();
+    final firstOfNextMonth = DateTime.utc(now.year, now.month + 1, 1);
+    final periodName = DateFormat('MMMM yyyy').format(now);
+
+    await _supabase.from('financial_periods').insert({
       'id': const Uuid().v4(),
       'household_id': household.id,
-      'name': 'General',
-      'icon': 'folder',
+      'name': periodName,
+      'start_date': now.toIso8601String(),
+      'end_date': firstOfNextMonth.toIso8601String(),
+    });
+
+    // 4. Initialize Default Account (Private)
+    final accountId = const Uuid().v4();
+    await _supabase.from('accounts').insert({
+      'id': accountId,
+      'household_id': household.id,
+      'owner_id': userId, // Private by default
+      'name': 'Current Account',
+      'type': 'checking',
+      'is_public': false,
+    });
+
+    // 5. Initialize "Unplanned" System Budget for this account
+    // This is mandatory for every account to handle unsorted transactions.
+    await _supabase.from('budgets').insert({
+      'id': const Uuid().v4(),
+      'household_id': household.id,
+      'account_id': accountId,
+      'name': 'Unplanned',
+      'default_amount': 0,
+      'icon': 'help-circle',
       'color': '#71717A',
+      'is_system': true,
     });
 
     return household;
@@ -64,7 +94,11 @@ class HouseholdRepository {
   }
 
   /// Creates an invitation.
-  Future<InvitationModel> createInvitation(String householdId, String email, String invitedBy) async {
+  Future<InvitationModel> createInvitation(
+    String householdId,
+    String email,
+    String invitedBy,
+  ) async {
     final data = await _supabase
         .from('invitations')
         .insert({
@@ -74,7 +108,7 @@ class HouseholdRepository {
         })
         .select()
         .single();
-    
+
     return InvitationModel.fromJson(data);
   }
 
@@ -87,7 +121,9 @@ class HouseholdRepository {
         .eq('status', 'pending')
         .maybeSingle();
 
-    if (invitationData == null) throw Exception('Invitation invalid or expired');
+    if (invitationData == null) {
+      throw Exception('Invitation invalid or expired');
+    }
     final invitation = InvitationModel.fromJson(invitationData);
 
     await _supabase

@@ -26,21 +26,21 @@ GoRouter router(Ref ref) {
       final loggingIn = state.matchedLocation == '/login';
 
       if (!loggedIn) return loggingIn ? null : '/login';
-      
+
       // Check for household
       final profile = ref.read(profileProvider).value;
-      if (profile != null && profile.householdId == '00000000-0000-0000-0000-000000000000') {
-        if (state.matchedLocation != '/setup-household') return '/setup-household';
+      if (profile != null &&
+          profile.householdId == '00000000-0000-0000-0000-000000000000') {
+        if (state.matchedLocation != '/setup-household') {
+          return '/setup-household';
+        }
       }
 
       if (loggingIn) return '/dashboard';
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/setup-household',
         builder: (context, state) => const HouseholdSetupScreen(),
@@ -62,13 +62,16 @@ GoRouter router(Ref ref) {
             routes: [
               GoRoute(
                 path: 'detail',
-                builder: (context, state) => BudgetDetailScreen(budget: state.extra as BudgetModel),
+                builder: (context, state) =>
+                    BudgetDetailScreen(budget: state.extra as BudgetModel),
               ),
             ],
           ),
           GoRoute(
             path: '/projects',
-            builder: (context, state) => const Scaffold(body: Center(child: Text('Projects Placeholder'))),
+            builder: (context, state) => const Scaffold(
+              body: Center(child: Text('Projects Placeholder')),
+            ),
           ),
           GoRoute(
             path: '/profile',

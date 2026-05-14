@@ -13,7 +13,10 @@ class TransactionRepository {
 
   /// Streams transactions for a specific account and period.
   Stream<List<TransactionModel>> watchTransactions(
-      String accountId, DateTime start, DateTime? end) {
+    String accountId,
+    DateTime start,
+    DateTime? end,
+  ) {
     String sql =
         'SELECT * FROM transactions WHERE account_id = ? AND transaction_date >= ? AND deleted_at IS NULL';
     List<dynamic> params = [accountId, start.toIso8601String()];
@@ -25,7 +28,9 @@ class TransactionRepository {
 
     sql += ' ORDER BY transaction_date DESC';
 
-    return _db.watch(sql, params).map(
+    return _db
+        .watch(sql, params)
+        .map(
           (rows) => rows.map((row) => TransactionModel.fromJson(row)).toList(),
         );
   }
@@ -64,7 +69,7 @@ class TransactionRepository {
   /// Calculates real balance for an account (sum of cleared transactions).
   Future<int> getRealBalance(String accountId) async {
     final row = await _db.get(
-      'SELECT SUM(amount) as total FROM transactions WHERE account_id = ? AND status = "cleared" AND deleted_at IS NULL',
+      "SELECT SUM(amount) as total FROM transactions WHERE account_id = ? AND status = 'cleared' AND deleted_at IS NULL",
       [accountId],
     );
     return row?['total'] ?? 0;

@@ -3,7 +3,7 @@
 -- ==========================================
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TYPE account_type AS ENUM ('checking', 'savings_locked');
+CREATE TYPE account_type AS ENUM ('checking', 'savings');
 CREATE TYPE transaction_status AS ENUM ('pending', 'cleared');
 CREATE TYPE transaction_type AS ENUM ('income', 'expense', 'transfer');
 

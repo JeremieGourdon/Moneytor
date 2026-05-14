@@ -56,7 +56,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
     if (amountCents == 0) return;
 
-    await ref.read(transactionProvider.notifier).addTransaction(
+    await ref
+        .read(transactionProvider.notifier)
+        .addTransaction(
           accountId: _selectedAccountId!,
           budgetId: _selectedBudgetId!,
           amount: amountCents,
@@ -152,7 +154,9 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                             .where((a) => a.id == _selectedAccountId)
                             .firstOrNull
                             ?.name ??
-                        (accounts.isNotEmpty ? accounts.first.name : 'Checking'),
+                        (accounts.isNotEmpty
+                            ? accounts.first.name
+                            : 'Checking'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -178,12 +182,15 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 60),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: Text(
                 'VALIDATE',
                 style: GoogleFonts.jetBrainsMono(
-                    fontWeight: FontWeight.bold, letterSpacing: 2),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
               ),
             ),
           ],
@@ -225,21 +232,33 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.grey,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Flexible(
-                  child: Text(value,
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis)),
-              const Icon(LucideIcons.chevron_down, size: 14, color: Colors.grey),
+                child: Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const Icon(
+                LucideIcons.chevron_down,
+                size: 14,
+                color: Colors.grey,
+              ),
             ],
           ),
         ],

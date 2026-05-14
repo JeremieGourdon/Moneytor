@@ -12,10 +12,10 @@ class BudgetModel {
   final int defaultAmount; // in cents
   final String? icon;
   final String? color;
-  
+
   @SQLiteBoolConverter()
   final bool isSystem;
-  
+
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;

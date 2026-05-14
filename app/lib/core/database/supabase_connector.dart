@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:powersync/powersync.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -9,13 +10,36 @@ class SupabaseConnector extends PowerSyncBackendConnector {
 
   @override
   Future<PowerSyncCredentials?> fetchCredentials() async {
-    final session = supabase.auth.currentSession;
+    var session = supabase.auth.currentSession;
     if (session == null) return null;
+
+    // Check if the session is expired or close to expiring
+    if (session.isExpired) {
+      try {
+        final response = await supabase.auth.refreshSession();
+        session = response.session;
+      } catch (e) {
+        developer.log(
+          'Failed to refresh Supabase session: $e',
+          name: 'powersync.auth',
+          error: e,
+        );
+        return null;
+      }
+    }
+
+    if (session == null) return null;
+
+    final user = session.user;
 
     // PowerSync expects the Supabase JWT
     return PowerSyncCredentials(
-      endpoint: 'YOUR_POWERSYNC_ENDPOINT_HERE', // TODO: Add endpoint
+      endpoint: 'https://6a04476f234fa2bf51a24c72.powersync.journeyapps.com',
       token: session.accessToken,
+      userId: user.id,
+      expiresAt: session.expiresAt != null
+          ? DateTime.fromMillisecondsSinceEpoch(session.expiresAt! * 1000)
+          : null,
     );
   }
 
@@ -25,8 +49,10 @@ class SupabaseConnector extends PowerSyncBackendConnector {
     final transaction = await database.getNextCrudTransaction();
     if (transaction == null) return;
 
+    CrudEntry? currentOp;
     try {
       for (final operation in transaction.crud) {
+        currentOp = operation;
         final table = operation.table;
         final row = operation.opData;
 
@@ -46,6 +72,24 @@ class SupabaseConnector extends PowerSyncBackendConnector {
       // Mark transaction as completed after successful upload
       await transaction.complete();
     } catch (e) {
+      if (e is PostgrestException) {
+        developer.log(
+          'Upload error for table "${currentOp?.table}" (ID: ${currentOp?.id}): ${e.message}\n'
+          'Op: ${currentOp?.op}, Data: ${currentOp?.opData}\n'
+          'Code: ${e.code}, Details: ${e.details}, Hint: ${e.hint}',
+          name: 'powersync.upload',
+          error: e,
+          level: 1000,
+        );
+      } else {
+        developer.log(
+          'Unexpected upload error: $e',
+          name: 'powersync.upload',
+          error: e,
+          level: 1000,
+        );
+      }
+
       // Re-throwing will cause PowerSync to retry
       rethrow;
     }

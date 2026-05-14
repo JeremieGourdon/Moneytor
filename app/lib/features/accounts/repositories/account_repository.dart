@@ -11,9 +11,12 @@ class AccountRepository {
 
   /// Streams all accounts for the household.
   Stream<List<AccountModel>> watchAccounts(String householdId) {
-    return _db.db.watch('SELECT * FROM accounts WHERE household_id = ? AND deleted_at IS NULL', parameters: [householdId]).map(
-      (rows) => rows.map((row) => AccountModel.fromJson(row)).toList(),
-    );
+    return _db
+        .watch(
+          'SELECT * FROM accounts WHERE household_id = ? AND deleted_at IS NULL',
+          [householdId],
+        )
+        .map((rows) => rows.map((row) => AccountModel.fromJson(row)).toList());
   }
 
   /// Fetches a single account by ID.
@@ -54,6 +57,14 @@ class AccountRepository {
     );
   }
 
+  /// Updates an account's name.
+  Future<void> updateAccountName(String id, String name) async {
+    await _db.execute(
+      'UPDATE accounts SET name = ?, updated_at = ? WHERE id = ?',
+      [name, DateTime.now().toUtc().toIso8601String(), id],
+    );
+  }
+
   /// Soft deletes an account.
   Future<void> deleteAccount(String id) async {
     final now = DateTime.now().toUtc().toIso8601String();
@@ -71,10 +82,15 @@ class AccountRepository {
   /// Calculates the real-time balance of an account.
   Future<int> getBalance(String accountId) async {
     final row = await _db.get(
-      'SELECT SUM(amount) as balance FROM transactions WHERE account_id = ? AND status = "cleared" AND deleted_at IS NULL',
+      "SELECT SUM(amount) as balance FROM transactions WHERE account_id = ? AND status = 'cleared' AND deleted_at IS NULL",
       [accountId],
     );
     return row?['balance'] ?? 0;
+  }
+
+  /// Executes a raw SQL command.
+  Future<void> execute(String sql, [List<dynamic>? params]) async {
+    await _db.execute(sql, params);
   }
 }
 

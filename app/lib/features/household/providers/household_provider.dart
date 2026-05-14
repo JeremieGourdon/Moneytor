@@ -5,7 +5,7 @@ import '../repositories/household_repository.dart';
 
 part 'household_provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class HouseholdNotifier extends _$HouseholdNotifier {
   @override
   FutureOr<HouseholdModel?> build() async {
@@ -25,7 +25,7 @@ class HouseholdNotifier extends _$HouseholdNotifier {
       final household = await ref
           .read(householdRepositoryProvider)
           .createHousehold(name, profile.id, startDay: startDay);
-      
+
       ref.invalidate(profileProvider);
       return household;
     });
@@ -52,11 +52,13 @@ class HouseholdNotifier extends _$HouseholdNotifier {
       await ref
           .read(householdRepositoryProvider)
           .acceptInvitation(token, profile.id);
-      
+
       ref.invalidate(profileProvider);
       // After accepting, we need to fetch the newly joined household
       final newProfile = await ref.read(profileProvider.future);
-      return await ref.read(householdRepositoryProvider).getHousehold(newProfile!.householdId);
+      return await ref
+          .read(householdRepositoryProvider)
+          .getHousehold(newProfile!.householdId);
     });
   }
 }

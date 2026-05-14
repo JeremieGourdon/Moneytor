@@ -36,19 +36,23 @@ class BudgetsScreen extends ConsumerWidget {
               const Text(
                 'YOUR ENVELOPES',
                 style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(height: 16),
               budgetsAsync.when(
                 data: (budgets) => budgets.isEmpty
                     ? const Center(
                         child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 32.0),
-                        child: Text('No budgets yet. Create one to start.',
-                            style: TextStyle(color: Colors.grey)),
-                      ))
+                          padding: EdgeInsets.symmetric(vertical: 32.0),
+                          child: Text(
+                            'No budgets yet. Create one to start.',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      )
                     : ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -57,17 +61,25 @@ class BudgetsScreen extends ConsumerWidget {
                         itemBuilder: (context, index) {
                           final budget = budgets[index];
                           return _buildBudgetCard(
-                              context, ref, budget, formatter);
+                            context,
+                            ref,
+                            budget,
+                            formatter,
+                          );
                         },
                       ),
                 loading: () => const Center(
-                    child: CircularProgressIndicator(color: Colors.black)),
+                  child: CircularProgressIndicator(color: Colors.black),
+                ),
                 error: (err, _) => Text('Error: $err'),
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: () => _showAddBudgetDialog(
-                    context, ref, accountsAsync.value ?? []),
+                  context,
+                  ref,
+                  accountsAsync.value ?? [],
+                ),
                 icon: const Icon(LucideIcons.plus, size: 18),
                 label: const Text('NEW BUDGET'),
                 style: ElevatedButton.styleFrom(
@@ -75,7 +87,8 @@ class BudgetsScreen extends ConsumerWidget {
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
             ],
@@ -85,18 +98,28 @@ class BudgetsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBudgetCard(BuildContext context, WidgetRef ref,
-      BudgetModel budget, NumberFormat formatter) {
+  Widget _buildBudgetCard(
+    BuildContext context,
+    WidgetRef ref,
+    BudgetModel budget,
+    NumberFormat formatter,
+  ) {
     return Card(
       child: ListTile(
         leading: Icon(_getIconData(budget.icon), color: Colors.black),
-        title: Text(budget.name,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          budget.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         subtitle: Text(
-            'Monthly: ${formatter.format(budget.defaultAmount / 100.0)}',
-            style: const TextStyle(fontSize: 12)),
-        trailing:
-            const Icon(LucideIcons.chevron_right, size: 16, color: Colors.grey),
+          'Monthly: ${formatter.format(budget.defaultAmount / 100.0)}',
+          style: const TextStyle(fontSize: 12),
+        ),
+        trailing: const Icon(
+          LucideIcons.chevron_right,
+          size: 16,
+          color: Colors.grey,
+        ),
         onTap: () => context.go('/budgets/detail', extra: budget),
       ),
     );
@@ -118,7 +141,10 @@ class BudgetsScreen extends ConsumerWidget {
   }
 
   void _showAddBudgetDialog(
-      BuildContext context, WidgetRef ref, List<dynamic> accounts) {
+    BuildContext context,
+    WidgetRef ref,
+    List<dynamic> accounts,
+  ) {
     final nameController = TextEditingController();
     final amountController = TextEditingController();
     String? selectedAccountId = accounts.isNotEmpty ? accounts.first.id : null;
@@ -128,30 +154,41 @@ class BudgetsScreen extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('NEW BUDGET',
-              style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold)),
+          title: Text(
+            'NEW BUDGET',
+            style: GoogleFonts.jetBrainsMono(fontWeight: FontWeight.bold),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
                 decoration: const InputDecoration(
-                    labelText: 'Name', hintText: 'e.g., Groceries'),
+                  labelText: 'Name',
+                  hintText: 'e.g., Groceries',
+                ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: amountController,
                 decoration: const InputDecoration(
-                    labelText: 'Default Amount', hintText: '0.00'),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                  labelText: 'Default Amount',
+                  hintText: '0.00',
+                ),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 initialValue: selectedAccountId,
                 items: accounts
-                    .map((a) => DropdownMenuItem(
-                        value: a.id as String, child: Text(a.name)))
+                    .map(
+                      (a) => DropdownMenuItem(
+                        value: a.id as String,
+                        child: Text(a.name),
+                      ),
+                    )
                     .toList(),
                 onChanged: (val) => setState(() => selectedAccountId = val),
                 decoration: const InputDecoration(labelText: 'Linked Account'),
@@ -160,8 +197,9 @@ class BudgetsScreen extends ConsumerWidget {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('CANCEL')),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('CANCEL'),
+            ),
             ElevatedButton(
               onPressed: () async {
                 if (nameController.text.isNotEmpty &&
@@ -189,7 +227,9 @@ class BudgetsScreen extends ConsumerWidget {
                 }
               },
               style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black, foregroundColor: Colors.white),
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('CREATE'),
             ),
           ],

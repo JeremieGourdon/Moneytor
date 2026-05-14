@@ -33,7 +33,7 @@ final class DatabaseServiceProvider
   DatabaseService create() => DatabaseService();
 }
 
-String _$databaseServiceHash() => r'7f15a53fc59e53aac9da9b8f5893a88d8d71d3ff';
+String _$databaseServiceHash() => r'0033ef457a180ca5393c7f14ef543d9bb63ff988';
 
 abstract class _$DatabaseService extends $AsyncNotifier<PowerSyncDatabase> {
   FutureOr<PowerSyncDatabase> build();

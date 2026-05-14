@@ -1,49 +1,53 @@
-# PowerSync Sync Rules for Moneytor
-# This file defines how data is filtered and synced to local devices.
+config:
+  edition: 3
 
-bucket_definitions:
-  # 1. Global Household Bucket: Everything shared within the household
-  household_data:
-    parameters:
-      - household_id
-    data:
-      - table: households
-        select: SELECT * FROM households WHERE id = ?
-      - table: users
-        select: SELECT * FROM users WHERE household_id = ?
-      - table: projects
-        select: SELECT * FROM projects WHERE household_id = ?
-      - table: categories
-        select: SELECT * FROM categories WHERE household_id = ?
-      - table: financial_periods
-        select: SELECT * FROM financial_periods WHERE household_id = ?
-      - table: notifications
-        select: SELECT * FROM notifications WHERE household_id = ? AND user_id = token_id()
-      
-      # Shared budgets and their templates
-      - table: budgets
-        select: SELECT * FROM budgets WHERE household_id = ?
-      - table: recurring_templates
-        select: SELECT * FROM recurring_templates WHERE household_id = ?
+streams:
+  # Households: Access current user's household
+  households:
+    auto_subscribe: true
+    query: |
+      SELECT h.* FROM households h
+      INNER JOIN users u ON u.household_id = h.id
+      WHERE u.id = auth.user_id()
 
-      # Public accounts and their transactions
-      - table: accounts
-        select: SELECT * FROM accounts WHERE household_id = ? AND is_public = TRUE
-      - table: transactions
-        select: |
-          SELECT t.* FROM transactions t
-          JOIN accounts a ON t.account_id = a.id
-          WHERE t.household_id = ? AND a.is_public = TRUE
+  # Users: Access users in the same household
+  users:
+    auto_subscribe: true
+    query: |
+      SELECT u2.* FROM users u2
+      INNER JOIN users u1 ON u1.household_id = u2.household_id
+      WHERE u1.id = auth.user_id()
 
-  # 2. Private Account Bucket: Syncs ONLY to the owner's device
-  user_private_data:
-    parameters:
-      - user_id
-    data:
-      - table: accounts
-        select: SELECT * FROM accounts WHERE owner_id = ? AND is_public = FALSE
-      - table: transactions
-        select: |
-          SELECT t.* FROM transactions t
-          JOIN accounts a ON t.account_id = a.id
-          WHERE a.owner_id = ? AND a.is_public = FALSE
+  # Shared Resources (Linked by household_id)
+  shared_data:
+    auto_subscribe: true
+    queries:
+      - SELECT c.* FROM categories c INNER JOIN users u ON u.household_id = c.household_id WHERE u.id = auth.user_id()
+      - SELECT p.* FROM projects p INNER JOIN users u ON u.household_id = p.household_id WHERE u.id = auth.user_id()
+      - SELECT fp.* FROM financial_periods fp INNER JOIN users u ON u.household_id = fp.household_id WHERE u.id = auth.user_id()
+      - SELECT b.* FROM budgets b INNER JOIN users u ON u.household_id = b.household_id WHERE u.id = auth.user_id()
+      - SELECT rt.* FROM recurring_templates rt INNER JOIN users u ON u.household_id = rt.household_id WHERE u.id = auth.user_id()
+
+  # Accounts & Transactions: Filtered by Privacy Rules
+  accounts_and_transactions:
+    auto_subscribe: true
+    queries:
+      # Public accounts in my household
+      - |
+        SELECT a.* FROM accounts a
+        INNER JOIN users u ON u.household_id = a.household_id
+        WHERE u.id = auth.user_id() AND a.is_public = TRUE
+      # Private accounts I own
+      - SELECT * FROM accounts WHERE owner_id = auth.user_id() AND is_public = FALSE
+      # Transactions for the accounts above
+      - |
+        SELECT t.* FROM transactions t
+        INNER JOIN accounts a ON t.account_id = a.id
+        INNER JOIN users u ON u.household_id = t.household_id
+        WHERE u.id = auth.user_id() 
+        AND (a.is_public = TRUE OR a.owner_id = auth.user_id())
+
+  # User-specific data
+  notifications:
+    auto_subscribe: true
+    query: SELECT * FROM notifications WHERE user_id = auth.user_id()

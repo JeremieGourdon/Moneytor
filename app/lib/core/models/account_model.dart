@@ -10,10 +10,10 @@ class AccountModel {
   final String? ownerId;
   final String name;
   final String type;
-  
+
   @SQLiteBoolConverter()
   final bool isPublic;
-  
+
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
@@ -35,11 +35,7 @@ class AccountModel {
 
   Map<String, dynamic> toJson() => _$AccountModelToJson(this);
 
-  AccountModel copyWith({
-    String? name,
-    String? type,
-    bool? isPublic,
-  }) {
+  AccountModel copyWith({String? name, String? type, bool? isPublic}) {
     return AccountModel(
       id: id,
       householdId: householdId,

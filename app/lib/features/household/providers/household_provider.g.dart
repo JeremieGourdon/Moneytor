@@ -20,7 +20,7 @@ final class HouseholdNotifierProvider
         argument: null,
         retry: null,
         name: r'householdProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -33,7 +33,7 @@ final class HouseholdNotifierProvider
   HouseholdNotifier create() => HouseholdNotifier();
 }
 
-String _$householdNotifierHash() => r'077900b5720a3b952f2565ef6eb06fc4421fd207';
+String _$householdNotifierHash() => r'29d46d0b0ab1c81eaaa5602f015b365d03684e71';
 
 abstract class _$HouseholdNotifier extends $AsyncNotifier<HouseholdModel?> {
   FutureOr<HouseholdModel?> build();

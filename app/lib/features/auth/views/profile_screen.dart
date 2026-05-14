@@ -23,23 +23,35 @@ class ProfileScreen extends ConsumerWidget {
       body: profile.when(
         data: (user) {
           if (user == null) {
-            return const Center(child: Text('No profile found. Please set up your household.'));
+            return const Center(
+              child: Text('No profile found. Please set up your household.'),
+            );
           }
           return Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('First Name: ${user.firstName}', style: const TextStyle(fontSize: 18)),
+                Text(
+                  'First Name: ${user.firstName}',
+                  style: const TextStyle(fontSize: 18),
+                ),
                 const SizedBox(height: 8),
-                Text('Role: ${user.role}', style: const TextStyle(fontSize: 18)),
+                Text(
+                  'Role: ${user.role}',
+                  style: const TextStyle(fontSize: 18),
+                ),
                 const SizedBox(height: 8),
-                Text('Household ID: ${user.householdId}', style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                Text(
+                  'Household ID: ${user.householdId}',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
               ],
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: Colors.black)),
+        loading: () =>
+            const Center(child: CircularProgressIndicator(color: Colors.black)),
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );

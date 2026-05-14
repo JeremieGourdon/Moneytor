@@ -28,7 +28,7 @@ final class AllBudgetsProvider
         argument: null,
         retry: null,
         name: r'allBudgetsProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -48,7 +48,7 @@ final class AllBudgetsProvider
   }
 }
 
-String _$allBudgetsHash() => r'a56ebe0ffe3f503e0bc229e505beba47471a5601';
+String _$allBudgetsHash() => r'42e8690d75069bd1a4cc0868fdbc3681562d9f6b';
 
 @ProviderFor(accountBudgets)
 final accountBudgetsProvider = AccountBudgetsFamily._();

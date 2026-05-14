@@ -32,20 +32,25 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen> {
       return const Scaffold(body: Center(child: Text('No active period')));
     }
 
-    final transactionsStream =
-        ref.watch(transactionRepositoryProvider).watchTransactions(
-              widget.budget.accountId,
-              period.startDate,
-              period.endDate,
-            );
+    final transactionsStream = ref
+        .watch(transactionRepositoryProvider)
+        .watchTransactions(
+          widget.budget.accountId,
+          period.startDate,
+          period.endDate,
+        );
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.budget.name.toUpperCase(),
-            style: const TextStyle(letterSpacing: 2)),
+        title: Text(
+          widget.budget.name.toUpperCase(),
+          style: const TextStyle(letterSpacing: 2),
+        ),
         actions: [
           IconButton(
-              onPressed: () {}, icon: const Icon(LucideIcons.pencil, size: 20)),
+            onPressed: () {},
+            icon: const Icon(LucideIcons.pencil, size: 20),
+          ),
         ],
       ),
       body: StreamBuilder<List<TransactionModel>>(
@@ -53,17 +58,20 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-                child: CircularProgressIndicator(color: Colors.black));
+              child: CircularProgressIndicator(color: Colors.black),
+            );
           }
 
-          var txs = snapshot.data
+          var txs =
+              snapshot.data
                   ?.where((t) => t.budgetId == widget.budget.id)
                   .toList() ??
               [];
 
           if (_selectedCategoryId != null) {
-            txs =
-                txs.where((t) => t.categoryId == _selectedCategoryId).toList();
+            txs = txs
+                .where((t) => t.categoryId == _selectedCategoryId)
+                .toList();
           }
 
           return Column(
@@ -73,7 +81,9 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen> {
               _buildCategoryFilters(categoriesAsync),
               Expanded(
                 child: txs.isEmpty
-                    ? const Center(child: Text('No transactions in this period.'))
+                    ? const Center(
+                        child: Text('No transactions in this period.'),
+                      )
                     : ListView.separated(
                         padding: const EdgeInsets.all(24),
                         itemCount: txs.length,
@@ -83,17 +93,24 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen> {
                           final tx = txs[index];
                           return ListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: Text(tx.description ?? 'No description',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            subtitle: Text(DateFormat('dd/MM/yyyy')
-                                .format(tx.transactionDate)),
+                            title: Text(
+                              tx.description ?? 'No description',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              DateFormat(
+                                'dd/MM/yyyy',
+                              ).format(tx.transactionDate),
+                            ),
                             trailing: Text(
                               formatter.format(tx.amount / 100.0),
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color:
-                                    tx.amount < 0 ? Colors.red : Colors.green,
+                                color: tx.amount < 0
+                                    ? Colors.red
+                                    : Colors.green,
                               ),
                             ),
                           );
@@ -120,27 +137,33 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen> {
               onSelected: (val) => setState(() => _selectedCategoryId = null),
             ),
             const SizedBox(width: 8),
-            ...categories.map((cat) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(cat.name),
-                    selected: _selectedCategoryId == cat.id,
-                    onSelected: (val) => setState(
-                        () => _selectedCategoryId = val ? cat.id : null),
-                  ),
-                )),
+            ...categories.map(
+              (cat) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(cat.name),
+                  selected: _selectedCategoryId == cat.id,
+                  onSelected: (val) =>
+                      setState(() => _selectedCategoryId = val ? cat.id : null),
+                ),
+              ),
+            ),
           ],
         ),
       ),
       loading: () => const SizedBox(),
-      error: (_, __) => const SizedBox(),
+      error: (_, _) => const SizedBox(),
     );
   }
 
   Widget _buildSummaryHeader(
-      List<TransactionModel> txs, NumberFormat formatter) {
-    final spent =
-        txs.fold(0, (sum, tx) => sum + (tx.amount < 0 ? tx.amount.abs() : 0));
+    List<TransactionModel> txs,
+    NumberFormat formatter,
+  ) {
+    final spent = txs.fold(
+      0,
+      (sum, tx) => sum + (tx.amount < 0 ? tx.amount.abs() : 0),
+    );
     final remaining = widget.budget.defaultAmount - spent;
     final progress = spent / widget.budget.defaultAmount;
 
@@ -153,8 +176,11 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildStat('SPENT', formatter.format(spent / 100.0)),
-              _buildStat('REMAINING', formatter.format(remaining / 100.0),
-                  color: remaining < 0 ? Colors.red : null),
+              _buildStat(
+                'REMAINING',
+                formatter.format(remaining / 100.0),
+                color: remaining < 0 ? Colors.red : null,
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -174,13 +200,23 @@ class _BudgetDetailScreenState extends ConsumerState<BudgetDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(value,
-            style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
       ],
     );
   }
