@@ -8,87 +8,118 @@ import 'package:go_router/go_router.dart';
 import '../providers/budget_provider.dart';
 import '../repositories/budget_repository.dart';
 import '../../accounts/providers/account_provider.dart';
+import '../../accounts/providers/selected_account_provider.dart';
 import '../../household/providers/household_provider.dart';
 import '../../../core/models/budget_model.dart';
+import '../../../shared/widgets/account_selector_dropdown.dart';
 
 class BudgetsScreen extends ConsumerWidget {
   const BudgetsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final budgetsAsync = ref.watch(allBudgetsProvider);
+    final selectedAccount = ref.watch(selectedAccountProvider);
+    final budgetsAsync = selectedAccount != null
+        ? ref.watch(accountBudgetsProvider(selectedAccount.id))
+        : const AsyncValue.data(<BudgetModel>[]);
+    
     final accountsAsync = ref.watch(accountsProvider);
     final currency = ref.watch(householdProvider).value?.currency ?? 'EUR';
     final formatter = NumberFormat.simpleCurrency(name: currency);
+
+    if (accountsAsync.isLoading && selectedAccount == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: Colors.black)),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('BUDGETS', style: TextStyle(letterSpacing: 2)),
       ),
       body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(allBudgetsProvider),
+        onRefresh: () async {
+          ref.invalidate(accountsProvider);
+          if (selectedAccount != null) {
+            ref.invalidate(accountBudgetsProvider(selectedAccount.id));
+          }
+        },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(vertical: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'YOUR ENVELOPES',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 16),
-              budgetsAsync.when(
-                data: (budgets) => budgets.isEmpty
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 32.0),
-                          child: Text(
-                            'No budgets yet. Create one to start.',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: budgets.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final budget = budgets[index];
-                          return _buildBudgetCard(
-                            context,
-                            ref,
-                            budget,
-                            formatter,
-                          );
-                        },
+              const AccountSelectorDropdown(),
+              const SizedBox(height: 32),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      selectedAccount != null 
+                        ? 'ENVELOPES FOR ${selectedAccount.name.toUpperCase()}'
+                        : 'YOUR ENVELOPES',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                        letterSpacing: 1,
                       ),
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: Colors.black),
-                ),
-                error: (err, _) => Text('Error: $err'),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => _showAddBudgetDialog(
-                  context,
-                  ref,
-                  accountsAsync.value ?? [],
-                ),
-                icon: const Icon(LucideIcons.plus, size: 18),
-                label: const Text('NEW BUDGET'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                    ),
+                    const SizedBox(height: 16),
+                    budgetsAsync.when(
+                      data: (budgets) => budgets.isEmpty
+                          ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 32.0),
+                                child: Text(
+                                  'No budgets for this account.',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: budgets.length,
+                              separatorBuilder: (_, _) => const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final budget = budgets[index];
+                                return _buildBudgetCard(
+                                  context,
+                                  ref,
+                                  budget,
+                                  formatter,
+                                );
+                              },
+                            ),
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(color: Colors.black),
+                      ),
+                      error: (err, _) => Text('Error: $err'),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () => _showAddBudgetDialog(
+                        context,
+                        ref,
+                        accountsAsync.value ?? [],
+                        initialAccountId: selectedAccount?.id,
+                      ),
+                      icon: const Icon(LucideIcons.plus, size: 18),
+                      label: const Text('NEW BUDGET'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -216,11 +247,12 @@ class BudgetsScreen extends ConsumerWidget {
   void _showAddBudgetDialog(
     BuildContext context,
     WidgetRef ref,
-    List<dynamic> accounts,
-  ) {
+    List<dynamic> accounts, {
+    String? initialAccountId,
+  }) {
     final nameController = TextEditingController();
     final amountController = TextEditingController();
-    String? selectedAccountId = accounts.isNotEmpty ? accounts.first.id : null;
+    String? selectedAccountId = initialAccountId ?? (accounts.isNotEmpty ? accounts.first.id : null);
     String selectedIcon = 'folder';
 
     showDialog(

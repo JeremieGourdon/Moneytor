@@ -50,6 +50,83 @@ final class AllProjectsProvider
 
 String _$allProjectsHash() => r'b0cc8a2f7bcef89519ede7dfa7f2fcf72fec69bf';
 
+@ProviderFor(accountProjects)
+final accountProjectsProvider = AccountProjectsFamily._();
+
+final class AccountProjectsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<ProjectModel>>,
+          List<ProjectModel>,
+          Stream<List<ProjectModel>>
+        >
+    with
+        $FutureModifier<List<ProjectModel>>,
+        $StreamProvider<List<ProjectModel>> {
+  AccountProjectsProvider._({
+    required AccountProjectsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'accountProjectsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$accountProjectsHash();
+
+  @override
+  String toString() {
+    return r'accountProjectsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $StreamProviderElement<List<ProjectModel>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<ProjectModel>> create(Ref ref) {
+    final argument = this.argument as String;
+    return accountProjects(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AccountProjectsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$accountProjectsHash() => r'1e109a741c29273aed20d4f971349f9033d36524';
+
+final class AccountProjectsFamily extends $Family
+    with $FunctionalFamilyOverride<Stream<List<ProjectModel>>, String> {
+  AccountProjectsFamily._()
+    : super(
+        retry: null,
+        name: r'accountProjectsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  AccountProjectsProvider call(String accountId) =>
+      AccountProjectsProvider._(argument: accountId, from: this);
+
+  @override
+  String toString() => r'accountProjectsProvider';
+}
+
 @ProviderFor(projectSpent)
 final projectSpentProvider = ProjectSpentFamily._();
 
@@ -212,7 +289,7 @@ final class ProjectNotifierProvider
   ProjectNotifier create() => ProjectNotifier();
 }
 
-String _$projectNotifierHash() => r'cae270b6a79227f10cd57257f4ce16482dc56388';
+String _$projectNotifierHash() => r'b6e43b846bce621f657115779940d72f40f5507c';
 
 abstract class _$ProjectNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

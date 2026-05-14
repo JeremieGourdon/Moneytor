@@ -59,4 +59,10 @@ class DatabaseService extends _$DatabaseService {
     final db = await future;
     await db.execute(sql, params ?? []);
   }
+
+  /// Helper to run a transaction
+  Future<T> writeTransaction<T>(Future<T> Function(dynamic tx) callback) async {
+    final db = await future;
+    return db.writeTransaction((tx) => callback(tx));
+  }
 }

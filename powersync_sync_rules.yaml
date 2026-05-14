@@ -2,48 +2,62 @@ config:
   edition: 3
 
 streams:
-  # Households: Access current user's household
+  # Households: Access personal and shared households
   households:
     auto_subscribe: true
     query: |
       SELECT h.* FROM households h
-      INNER JOIN users u ON u.household_id = h.id
+      INNER JOIN users u ON (u.household_id = h.id OR u.shared_household_id = h.id)
       WHERE u.id = auth.user_id()
 
-  # Users: Access users in the same household
+  # Users: Access users in my personal or shared household
   users:
     auto_subscribe: true
     query: |
       SELECT u2.* FROM users u2
-      INNER JOIN users u1 ON u1.household_id = u2.household_id
+      INNER JOIN users u1 ON (u1.household_id = u2.household_id OR u1.shared_household_id = u2.household_id)
       WHERE u1.id = auth.user_id()
 
   # Shared Resources (Linked by household_id)
   shared_data:
     auto_subscribe: true
     queries:
-      - SELECT c.* FROM categories c INNER JOIN users u ON u.household_id = c.household_id WHERE u.id = auth.user_id()
-      - SELECT p.* FROM projects p INNER JOIN users u ON u.household_id = p.household_id WHERE u.id = auth.user_id()
-      - SELECT fp.* FROM financial_periods fp INNER JOIN users u ON u.household_id = fp.household_id WHERE u.id = auth.user_id()
-      - SELECT b.* FROM budgets b INNER JOIN users u ON u.household_id = b.household_id WHERE u.id = auth.user_id()
-      - SELECT rt.* FROM recurring_templates rt INNER JOIN users u ON u.household_id = rt.household_id WHERE u.id = auth.user_id()
+      - |
+        SELECT c.* FROM categories c 
+        INNER JOIN users u ON (u.household_id = c.household_id OR u.shared_household_id = c.household_id) 
+        WHERE u.id = auth.user_id()
+      - |
+        SELECT p.* FROM projects p 
+        INNER JOIN users u ON (u.household_id = p.household_id OR u.shared_household_id = p.household_id) 
+        WHERE u.id = auth.user_id()
+      - |
+        SELECT fp.* FROM financial_periods fp 
+        INNER JOIN users u ON (u.household_id = fp.household_id OR u.shared_household_id = fp.household_id) 
+        WHERE u.id = auth.user_id()
+      - |
+        SELECT b.* FROM budgets b 
+        INNER JOIN users u ON (u.household_id = b.household_id OR u.shared_household_id = b.household_id) 
+        WHERE u.id = auth.user_id()
+      - |
+        SELECT rt.* FROM recurring_templates rt 
+        INNER JOIN users u ON (u.household_id = rt.household_id OR u.shared_household_id = rt.household_id) 
+        WHERE u.id = auth.user_id()
 
   # Accounts & Transactions: Filtered by Privacy Rules
   accounts_and_transactions:
     auto_subscribe: true
     queries:
-      # Public accounts in my household
+      # All accounts in my personal household OR public accounts in my shared household
       - |
         SELECT a.* FROM accounts a
-        INNER JOIN users u ON u.household_id = a.household_id
-        WHERE u.id = auth.user_id() AND a.is_public = TRUE
-      # Private accounts I own
-      - SELECT * FROM accounts WHERE owner_id = auth.user_id() AND is_public = FALSE
-      # Transactions for the accounts above
+        INNER JOIN users u ON (u.household_id = a.household_id OR u.shared_household_id = a.household_id)
+        WHERE u.id = auth.user_id() 
+        AND (a.is_public = TRUE OR a.owner_id = auth.user_id())
+      # Transactions for accessible accounts
       - |
         SELECT t.* FROM transactions t
         INNER JOIN accounts a ON t.account_id = a.id
-        INNER JOIN users u ON u.household_id = t.household_id
+        INNER JOIN users u ON (u.household_id = t.household_id OR u.shared_household_id = t.household_id)
         WHERE u.id = auth.user_id() 
         AND (a.is_public = TRUE OR a.owner_id = auth.user_id())
 

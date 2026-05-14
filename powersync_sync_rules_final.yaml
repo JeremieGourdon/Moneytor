@@ -1,0 +1,50 @@
+# Moneytor PowerSync Sync Rules - Final Consolidated Version
+bucket_definitions:
+  # 1. Household-wide data (Shared and Personal)
+  # Users get access to any household they are a member of.
+  household_buckets:
+    parameters:
+      - SELECT h.id as household_id 
+        FROM households h
+        JOIN users u ON (u.household_id = h.id OR u.shared_household_id = h.id)
+        WHERE u.id = token_id()
+    data:
+      - table: households
+        select: SELECT * FROM households WHERE id = :household_id
+      - table: users
+        select: SELECT * FROM users WHERE household_id = :household_id OR shared_household_id = :household_id
+      - table: categories
+        select: SELECT * FROM categories WHERE household_id = :household_id
+      - table: budgets
+        select: SELECT * FROM budgets WHERE household_id = :household_id
+      - table: projects
+        select: SELECT * FROM projects WHERE household_id = :household_id
+      - table: financial_periods
+        select: SELECT * FROM financial_periods WHERE household_id = :household_id
+      - table: recurring_templates
+        select: SELECT * FROM recurring_templates WHERE household_id = :household_id
+      
+      # Public accounts and their transactions sync to everyone in the household
+      - table: accounts
+        select: SELECT * FROM accounts WHERE household_id = :household_id AND is_public = TRUE
+      - table: transactions
+        select: |
+          SELECT t.* FROM transactions t
+          JOIN accounts a ON t.account_id = a.id
+          WHERE t.household_id = :household_id AND a.is_public = TRUE
+
+  # 2. Private User Data
+  # Personal accounts and their transactions only sync to the owner.
+  user_private_buckets:
+    parameters:
+      - SELECT token_id() as user_id
+    data:
+      - table: accounts
+        select: SELECT * FROM accounts WHERE owner_id = :user_id AND is_public = FALSE
+      - table: transactions
+        select: |
+          SELECT t.* FROM transactions t
+          JOIN accounts a ON t.account_id = a.id
+          WHERE a.owner_id = :user_id AND a.is_public = FALSE
+      - table: notifications
+        select: SELECT * FROM notifications WHERE user_id = :user_id

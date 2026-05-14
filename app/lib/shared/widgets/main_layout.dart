@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../features/accounts/providers/account_provider.dart';
 import '../../features/dashboard/widgets/quick_add_sheet.dart';
 
 class MainLayout extends ConsumerWidget {
@@ -12,12 +11,6 @@ class MainLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Fallback: Ensure the user has at least one account.
-    // This handles cases where initialization might have failed during setup.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(accountProvider.notifier).ensureInitialAccount();
-    });
-
     final location = GoRouterState.of(context).matchedLocation;
 
     return Scaffold(

@@ -4,6 +4,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/project_model.dart';
 import '../../household/providers/household_provider.dart';
+import '../../accounts/providers/selected_account_provider.dart';
+import '../../../shared/widgets/account_selector_dropdown.dart';
 import '../providers/project_provider.dart';
 
 class ProjectsScreen extends ConsumerWidget {
@@ -11,82 +13,102 @@ class ProjectsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final projectsAsync = ref.watch(allProjectsProvider);
+    final selectedAccount = ref.watch(selectedAccountProvider);
+    final projectsAsync = selectedAccount != null
+        ? ref.watch(accountProjectsProvider(selectedAccount.id))
+        : const AsyncValue.data(<ProjectModel>[]);
+
+    final accountsAsync = ref.watch(accountsProvider);
     final currency = ref.watch(householdProvider).value?.currency ?? 'EUR';
     final formatter = NumberFormat.simpleCurrency(name: currency);
+
+    if (accountsAsync.isLoading && selectedAccount == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: Colors.black)),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'Projets',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          'PROJECTS',
+          style: TextStyle(letterSpacing: 2),
         ),
-        actions: [
-          IconButton(
-            onPressed: () => _showCreateProjectDialog(context, ref),
-            icon: const Icon(LucideIcons.plus),
+      ),
+      body: Column(
+        children: [
+          const SizedBox(height: 24),
+          const AccountSelectorDropdown(),
+          const SizedBox(height: 16),
+          Expanded(
+            child: projectsAsync.when(
+              data: (projects) {
+                if (projects.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(LucideIcons.target, size: 64, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No projects for this account.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () => _showCreateProjectDialog(context, ref, initialAccountId: selectedAccount?.id),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('CREATE PROJECT'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(24),
+                  itemCount: projects.length,
+                  itemBuilder: (context, index) {
+                    final project = projects[index];
+                    return _ProjectCard(project: project, formatter: formatter);
+                  },
+                );
+              },
+              loading: () =>
+                  const Center(child: CircularProgressIndicator(color: Colors.black)),
+              error: (err, _) => Center(child: Text('Error: $err')),
+            ),
           ),
         ],
       ),
-      body: projectsAsync.when(
-        data: (projects) {
-          if (projects.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(LucideIcons.target, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Aucun projet pour le moment',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () => _showCreateProjectDialog(context, ref),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Créer mon premier projet'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: projects.length,
-            itemBuilder: (context, index) {
-              final project = projects[index];
-              return _ProjectCard(project: project, formatter: formatter);
-            },
-          );
-        },
-        loading: () =>
-            const Center(child: CircularProgressIndicator(color: Colors.black)),
-        error: (err, _) => Center(child: Text('Erreur: $err')),
-      ),
+      floatingActionButton: selectedAccount != null ? FloatingActionButton(
+        onPressed: () => _showCreateProjectDialog(context, ref, initialAccountId: selectedAccount.id),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        child: const Icon(LucideIcons.plus),
+      ) : null,
     );
   }
 
-  void _showCreateProjectDialog(BuildContext context, WidgetRef ref) {
+  void _showCreateProjectDialog(BuildContext context, WidgetRef ref, {String? initialAccountId}) {
     final nameController = TextEditingController();
     final amountController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nouveau Projet'),
+        title: const Text('NEW PROJECT', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameController,
               decoration: const InputDecoration(
-                labelText: 'Nom du projet',
-                hintText: 'ex: Voyage au Japon',
+                labelText: 'Project Name',
+                hintText: 'e.g., Japan Trip',
               ),
             ),
             const SizedBox(height: 16),
@@ -94,8 +116,8 @@ class ProjectsScreen extends ConsumerWidget {
               controller: amountController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'Objectif (optionnel)',
-                hintText: 'ex: 3000',
+                labelText: 'Target Goal (optional)',
+                hintText: 'e.g., 3000',
               ),
             ),
           ],
@@ -103,7 +125,7 @@ class ProjectsScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: const Text('CANCEL'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -114,6 +136,7 @@ class ProjectsScreen extends ConsumerWidget {
                     .createProject(
                       nameController.text,
                       amount * 100, // Convert to cents
+                      accountId: initialAccountId,
                     );
                 Navigator.pop(context);
               }
@@ -122,7 +145,7 @@ class ProjectsScreen extends ConsumerWidget {
               backgroundColor: Colors.black,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Créer'),
+            child: const Text('CREATE'),
           ),
         ],
       ),

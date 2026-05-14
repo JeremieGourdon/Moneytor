@@ -14,6 +14,11 @@ Stream<List<ProjectModel>> allProjects(Ref ref) {
   return ref.watch(projectRepositoryProvider).watchProjects(household.id);
 }
 
+@riverpod
+Stream<List<ProjectModel>> accountProjects(Ref ref, String accountId) {
+  return ref.watch(projectRepositoryProvider).watchAccountProjects(accountId);
+}
+
 @Riverpod(keepAlive: true)
 Stream<int> projectSpent(Ref ref, String projectId) {
   return ref.watch(projectRepositoryProvider).watchProjectSpent(projectId);
@@ -46,13 +51,14 @@ class ProjectNotifier extends _$ProjectNotifier {
   @override
   FutureOr<void> build() async {}
 
-  Future<void> createProject(String name, int targetAmount) async {
+  Future<void> createProject(String name, int targetAmount, {String? accountId}) async {
     final household = await ref.read(householdProvider.future);
     if (household == null) return;
 
     final project = ProjectModel(
       id: const Uuid().v4(),
       householdId: household.id,
+      accountId: accountId,
       name: name,
       targetAmount: targetAmount,
       createdAt: DateTime.now().toUtc(),

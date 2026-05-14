@@ -7,6 +7,7 @@ part 'project_model.g.dart';
 class ProjectModel {
   final String id;
   final String householdId;
+  final String? accountId;
   final String name;
   final int targetAmount;
 
@@ -20,6 +21,7 @@ class ProjectModel {
   ProjectModel({
     required this.id,
     required this.householdId,
+    this.accountId,
     required this.name,
     this.targetAmount = 0,
     this.isPinnedToDashboard = false,
@@ -35,12 +37,14 @@ class ProjectModel {
 
   ProjectModel copyWith({
     String? name,
+    String? accountId,
     int? targetAmount,
     bool? isPinnedToDashboard,
   }) {
     return ProjectModel(
       id: id,
       householdId: householdId,
+      accountId: accountId ?? this.accountId,
       name: name ?? this.name,
       targetAmount: targetAmount ?? this.targetAmount,
       isPinnedToDashboard: isPinnedToDashboard ?? this.isPinnedToDashboard,

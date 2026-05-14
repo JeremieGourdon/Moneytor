@@ -9,6 +9,7 @@ part of 'project_model.dart';
 ProjectModel _$ProjectModelFromJson(Map<String, dynamic> json) => ProjectModel(
   id: json['id'] as String,
   householdId: json['household_id'] as String,
+  accountId: json['account_id'] as String?,
   name: json['name'] as String,
   targetAmount: (json['target_amount'] as num?)?.toInt() ?? 0,
   isPinnedToDashboard: json['is_pinned_to_dashboard'] == null
@@ -25,6 +26,7 @@ Map<String, dynamic> _$ProjectModelToJson(ProjectModel instance) =>
     <String, dynamic>{
       'id': instance.id,
       'household_id': instance.householdId,
+      'account_id': instance.accountId,
       'name': instance.name,
       'target_amount': instance.targetAmount,
       'is_pinned_to_dashboard': const SQLiteBoolConverter().toJson(

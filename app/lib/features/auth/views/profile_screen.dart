@@ -48,6 +48,25 @@ class ProfileScreen extends ConsumerWidget {
                   'Household ID: ${user.householdId}',
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
+                if (user.sharedHouseholdId != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Shared Household: ${user.sharedHouseholdId}',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
+                const SizedBox(height: 32),
+                if (user.sharedHouseholdId == null)
+                  ElevatedButton.icon(
+                    onPressed: () => context.push('/setup-household'),
+                    icon: const Icon(LucideIcons.users),
+                    label: const Text('REJOINDRE UN FOYER PARTAGÉ'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                  ),
                 const SizedBox(height: 32),
                 const Divider(),
                 ListTile(

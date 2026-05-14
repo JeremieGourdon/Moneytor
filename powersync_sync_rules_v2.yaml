@@ -1,42 +1,62 @@
-
-# Modern PowerSync Sync Rules (Sync Streams format)
+# Moneytor PowerSync Sync Rules (Complete & Robust)
 bucket_definitions:
+  # 1. User Profile & Private Data
+  # This bucket is assigned directly to the user by their ID.
+  # It contains their own user record and their private accounts/transactions.
+  user_private_data:
+    parameters:
+      - user_id
+    data:
+      - table: users
+        select: SELECT * FROM users WHERE id = :user_id
+      - table: accounts
+        select: SELECT * FROM accounts WHERE owner_id = :user_id AND is_public = FALSE
+      - table: transactions
+        select: |
+          SELECT t.* FROM transactions t
+          JOIN accounts a ON t.account_id = a.id
+          WHERE a.owner_id = :user_id AND a.is_public = FALSE
+      - table: notifications
+        select: SELECT * FROM notifications WHERE user_id = :user_id
+
+  # 2. Shared Household Bucket
+  # Contains data that everyone in the household can see.
+  # This bucket is assigned based on the household_id found in the users table.
   household_data:
     parameters:
       - household_id
     data:
       - table: households
-        select: SELECT * FROM households WHERE id = ?
+        select: SELECT * FROM households WHERE id = :household_id
       - table: users
-        select: SELECT * FROM users WHERE household_id = ?
-      - table: projects
-        select: SELECT * FROM projects WHERE household_id = ?
+        select: SELECT * FROM users WHERE household_id = :household_id OR shared_household_id = :household_id
       - table: categories
-        select: SELECT * FROM categories WHERE household_id = ?
-      - table: financial_periods
-        select: SELECT * FROM financial_periods WHERE household_id = ?
-      - table: notifications
-        select: SELECT * FROM notifications WHERE household_id = ? AND user_id = token_id()
+        select: SELECT * FROM categories WHERE household_id = :household_id
       - table: budgets
-        select: SELECT * FROM budgets WHERE household_id = ?
+        select: SELECT * FROM budgets WHERE household_id = :household_id
+      - table: projects
+        select: SELECT * FROM projects WHERE household_id = :household_id
+      - table: financial_periods
+        select: SELECT * FROM financial_periods WHERE household_id = :household_id
       - table: recurring_templates
-        select: SELECT * FROM recurring_templates WHERE household_id = ?
+        select: SELECT * FROM recurring_templates WHERE household_id = :household_id
       - table: accounts
-        select: SELECT * FROM accounts WHERE household_id = ? AND is_public = TRUE
+        select: SELECT * FROM accounts WHERE household_id = :household_id AND is_public = TRUE
       - table: transactions
         select: |
           SELECT t.* FROM transactions t
           JOIN accounts a ON t.account_id = a.id
-          WHERE t.household_id = ? AND a.is_public = TRUE
+          WHERE t.household_id = :household_id AND a.is_public = TRUE
 
-  user_private_data:
-    parameters:
-      - user_id
-    data:
-      - table: accounts
-        select: SELECT * FROM accounts WHERE owner_id = ? AND is_public = FALSE
-      - table: transactions
-        select: |
-          SELECT t.* FROM transactions t
-          JOIN accounts a ON t.account_id = a.id
-          WHERE a.owner_id = ? AND a.is_public = FALSE
+# Map users to their respective buckets
+bucket_assignments:
+  # 1. Assign the user to their private data bucket (Immediate)
+  - bucket: user_private_data
+    select: SELECT token_id() as user_id
+  
+  # 2. Assign users to their household buckets (Depends on users table)
+  - bucket: household_data
+    select: |
+      SELECT household_id FROM public.users WHERE id = token_id()
+      UNION
+      SELECT shared_household_id FROM public.users WHERE id = token_id() AND shared_household_id IS NOT NULL

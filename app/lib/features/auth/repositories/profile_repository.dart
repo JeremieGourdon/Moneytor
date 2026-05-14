@@ -23,7 +23,7 @@ class ProfileRepository {
 
   /// Updates the user's profile.
   Future<void> updateProfile(UserModel user) async {
-    await _supabase.from('users').upsert(user.toJson());
+    await _supabase.from('users').update(user.toJson()).eq('id', user.id);
   }
 }
 

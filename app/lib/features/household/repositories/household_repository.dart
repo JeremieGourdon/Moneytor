@@ -1,7 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:uuid/uuid.dart';
-import 'package:intl/intl.dart';
 import '../../../core/models/household_model.dart';
 import '../../../core/models/invitation_model.dart';
 
@@ -22,68 +20,6 @@ class HouseholdRepository {
 
     if (response == null) return null;
     return HouseholdModel.fromJson(response);
-  }
-
-  /// Creates a new household and initializes default data.
-  Future<HouseholdModel> createHousehold(
-    String name,
-    String userId, {
-    int startDay = 1,
-  }) async {
-    // 1. Create household
-    final householdData = await _supabase
-        .from('households')
-        .insert({'name': name, 'default_month_start_day': startDay})
-        .select()
-        .single();
-
-    final household = HouseholdModel.fromJson(householdData);
-
-    // 2. Update user with household_id
-    await _supabase
-        .from('users')
-        .update({'household_id': household.id})
-        .eq('id', userId);
-
-    // 3. Initialize Default Financial Period
-    final now = DateTime.now().toUtc();
-    final firstOfNextMonth = DateTime.utc(now.year, now.month + 1, 1);
-    final periodName = DateFormat('MMMM yyyy').format(now);
-
-    await _supabase.from('financial_periods').insert({
-      'id': const Uuid().v4(),
-      'household_id': household.id,
-      'name': periodName,
-      'start_date': now.toIso8601String(),
-      'end_date': firstOfNextMonth.toIso8601String(),
-    });
-
-    // 4. Initialize Default Account (Private)
-    final accountId = const Uuid().v4();
-    await _supabase.from('accounts').insert({
-      'id': accountId,
-      'household_id': household.id,
-      'owner_id': userId, // Private by default
-      'name': 'Current Account',
-      'type': 'checking',
-      'is_public': false,
-      'is_default': true,
-    });
-
-    // 5. Initialize "Unplanned" System Budget for this account
-    // This is mandatory for every account to handle unsorted transactions.
-    await _supabase.from('budgets').insert({
-      'id': const Uuid().v4(),
-      'household_id': household.id,
-      'account_id': accountId,
-      'name': 'Unplanned',
-      'default_amount': 0,
-      'icon': 'help-circle',
-      'color': '#71717A',
-      'is_default': true,
-    });
-
-    return household;
   }
 
   /// Updates household settings.
@@ -127,10 +63,10 @@ class HouseholdRepository {
     }
     final invitation = InvitationModel.fromJson(invitationData);
 
-    await _supabase
-        .from('users')
-        .update({'household_id': invitation.householdId})
-        .eq('id', userId);
+    // Update the USER to link to the shared household
+    await _supabase.from('users').update({
+      'shared_household_id': invitation.householdId,
+    }).eq('id', userId);
 
     await _supabase
         .from('invitations')

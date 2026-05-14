@@ -1,7 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/providers/auth_provider.dart';
-import '../../features/auth/providers/profile_provider.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/projects/views/projects_screen.dart';
 import '../../features/recurring/views/recurring_templates_screen.dart';
@@ -27,15 +26,6 @@ GoRouter router(Ref ref) {
       final loggingIn = state.matchedLocation == '/login';
 
       if (!loggedIn) return loggingIn ? null : '/login';
-
-      // Check for household
-      final profile = ref.read(profileProvider).value;
-      if (profile != null &&
-          profile.householdId == '00000000-0000-0000-0000-000000000000') {
-        if (state.matchedLocation != '/setup-household') {
-          return '/setup-household';
-        }
-      }
 
       if (loggingIn) return '/dashboard';
       return null;

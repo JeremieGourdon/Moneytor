@@ -50,6 +50,7 @@ CREATE TABLE financial_periods (
 CREATE TABLE users (
     id UUID PRIMARY KEY,
     household_id UUID NOT NULL REFERENCES households(id),
+    shared_household_id UUID REFERENCES households(id),
     first_name VARCHAR NOT NULL,
     role VARCHAR DEFAULT 'member',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

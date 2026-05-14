@@ -19,17 +19,28 @@ class ProjectRepository {
         .map((rows) => rows.map((row) => ProjectModel.fromJson(row)).toList());
   }
 
+  /// Streams projects for a specific account.
+  Stream<List<ProjectModel>> watchAccountProjects(String accountId) {
+    return _db
+        .watch(
+          'SELECT * FROM projects WHERE account_id = ? AND deleted_at IS NULL',
+          [accountId],
+        )
+        .map((rows) => rows.map((row) => ProjectModel.fromJson(row)).toList());
+  }
+
   /// Creates a new project.
   Future<void> createProject(ProjectModel project) async {
     await _db.execute(
       '''INSERT INTO projects (
-        id, household_id, name, target_amount, is_pinned_to_dashboard, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)''',
+        id, household_id, account_id, name, target_amount, is_pinned_to_dashboard, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
       [
         project.id,
         project.householdId,
+        project.accountId,
         project.name,
-        project.targetAmount.toString(), // SQLite BIGINT mapping
+        project.targetAmount,
         project.isPinnedToDashboard ? 1 : 0,
         project.createdAt.toIso8601String(),
         project.updatedAt.toIso8601String(),
