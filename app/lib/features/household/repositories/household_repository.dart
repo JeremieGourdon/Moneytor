@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:uuid/uuid.dart';
 import '../../../core/models/household_model.dart';
 import '../../../core/models/invitation_model.dart';
 
@@ -23,44 +22,20 @@ class HouseholdRepository {
     return HouseholdModel.fromJson(response);
   }
 
-  /// Creates a new household and initializes default data.
-  Future<HouseholdModel> createHousehold(String name, String userId) async {
-    // 1. Create household
-    final householdData = await _supabase
-        .from('households')
-        .insert({'name': name})
-        .select()
-        .single();
-    
-    final household = HouseholdModel.fromJson(householdData);
-
-    // 2. Update user with household_id
+  /// Updates household settings.
+  Future<void> updateHousehold(HouseholdModel household) async {
     await _supabase
-        .from('users')
-        .update({'household_id': household.id})
-        .eq('id', userId);
-
-    // 3. Initialize Default Data (Headless approach)
-    // We could do this via a Postgres function, but for now we'll do it here
-    
-    // a. Create "General" Category
-    await _supabase.from('categories').insert({
-      'id': const Uuid().v4(),
-      'household_id': household.id,
-      'name': 'General',
-      'icon': 'folder',
-      'color': '#71717A',
-    });
-
-    // Note: We don't create "Unplanned" budget yet because it needs an account_id.
-    // The first budget will be created when the first account is added or manually.
-    // OR we could create a dummy account, but better wait for user action.
-
-    return household;
+        .from('households')
+        .update(household.toJson())
+        .eq('id', household.id);
   }
 
   /// Creates an invitation.
-  Future<InvitationModel> createInvitation(String householdId, String email, String invitedBy) async {
+  Future<InvitationModel> createInvitation(
+    String householdId,
+    String email,
+    String invitedBy,
+  ) async {
     final data = await _supabase
         .from('invitations')
         .insert({
@@ -70,7 +45,7 @@ class HouseholdRepository {
         })
         .select()
         .single();
-    
+
     return InvitationModel.fromJson(data);
   }
 
@@ -83,13 +58,15 @@ class HouseholdRepository {
         .eq('status', 'pending')
         .maybeSingle();
 
-    if (invitationData == null) throw Exception('Invitation invalid or expired');
+    if (invitationData == null) {
+      throw Exception('Invitation invalid or expired');
+    }
     final invitation = InvitationModel.fromJson(invitationData);
 
-    await _supabase
-        .from('users')
-        .update({'household_id': invitation.householdId})
-        .eq('id', userId);
+    // Update the USER to link to the shared household
+    await _supabase.from('users').update({
+      'shared_household_id': invitation.householdId,
+    }).eq('id', userId);
 
     await _supabase
         .from('invitations')

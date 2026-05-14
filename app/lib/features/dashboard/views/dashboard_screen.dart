@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../auth/providers/profile_provider.dart';
+import '../../../core/models/user_model.dart';
 import '../../periods/providers/period_provider.dart';
 import '../../household/providers/household_provider.dart';
 import '../../transactions/providers/transaction_provider.dart';
-
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -16,7 +17,7 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider).value;
     final currentPeriod = ref.watch(currentPeriodProvider).value;
-    final totalRavAsync = ref.watch(totalDisposableIncomeProvider);
+    final totalRav = ref.watch(totalDisposableIncomeProvider);
     final currency = ref.watch(householdProvider).value?.currency ?? 'EUR';
     final formatter = NumberFormat.simpleCurrency(name: currency);
 
@@ -53,23 +54,112 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  Stack(
+                  Row(
                     children: [
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(LucideIcons.bell, size: 24),
-                      ),
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFEF4444),
-                            shape: BoxShape.circle,
+                      Stack(
+                        children: [
+                          IconButton(
+                            onPressed: () {},
+                            icon: const Icon(LucideIcons.bell, size: 24),
                           ),
-                        ),
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFEF4444),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      PopupMenuButton<String>(
+                        onSelected: (value) async {
+                          if (value == 'logout') {
+                            await ref
+                                .read(authStateProvider.notifier)
+                                .signOut();
+                          } else if (value == 'profile') {
+                            if (!context.mounted) return;
+                            final nameController = TextEditingController(
+                              text: profile?.firstName,
+                            );
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Modifier le profil'),
+                                content: TextField(
+                                  controller: nameController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Prénom',
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('Annuler'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      if (profile != null &&
+                                          nameController.text.isNotEmpty) {
+                                        final updated = UserModel(
+                                          id: profile.id,
+                                          householdId: profile.householdId,
+                                          firstName: nameController.text,
+                                          role: profile.role,
+                                          createdAt: profile.createdAt,
+                                          updatedAt: DateTime.now().toUtc(),
+                                        );
+                                        await ref
+                                            .read(profileProvider.notifier)
+                                            .updateProfile(updated);
+                                        if (context.mounted) {
+                                          Navigator.pop(context);
+                                        }
+                                      }
+                                    },
+                                    child: const Text('Enregistrer'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'profile',
+                            child: Row(
+                              children: [
+                                Icon(LucideIcons.user, size: 18),
+                                SizedBox(width: 8),
+                                Text('Modifier le profil'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'logout',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  LucideIcons.log_out,
+                                  size: 18,
+                                  color: Colors.red,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Se déconnecter',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        icon: const Icon(LucideIcons.settings, size: 24),
                       ),
                     ],
                   ),
@@ -78,12 +168,7 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // Hero RAV Section (The Split Card)
-              totalRavAsync.when(
-                data: (rav) => _buildHeroRAV(context, rav, formatter),
-                loading: () => const Center(
-                    child: CircularProgressIndicator(color: Colors.black)),
-                error: (err, _) => Text('Error: $err'),
-              ),
+              _buildHeroRAV(context, totalRav, formatter),
 
               const SizedBox(height: 32),
 
@@ -96,12 +181,7 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const SizedBox(
-                height: 120,
-                child: Center(
-                    child: Text('Carousel coming soon...',
-                        style: TextStyle(color: Colors.grey))),
-              ),
+              _buildComingWeek(context, ref, formatter),
 
               const SizedBox(height: 32),
               const Text(
@@ -116,8 +196,11 @@ class DashboardScreen extends ConsumerWidget {
               const AspectRatio(
                 aspectRatio: 1,
                 child: Center(
-                    child: Text('Budget Grid coming soon...',
-                        style: TextStyle(color: Colors.grey))),
+                  child: Text(
+                    'Budget Grid coming soon...',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ),
               ),
             ],
           ),
@@ -127,7 +210,10 @@ class DashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildHeroRAV(
-      BuildContext context, int ravCents, NumberFormat formatter) {
+    BuildContext context,
+    int ravCents,
+    NumberFormat formatter,
+  ) {
     final ravDouble = ravCents / 100.0;
 
     return Container(
@@ -180,6 +266,126 @@ class DashboardScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildComingWeek(
+    BuildContext context,
+    WidgetRef ref,
+    NumberFormat formatter,
+  ) {
+    final pendingAsync = ref.watch(pendingTransactionsProvider);
+
+    return pendingAsync.when(
+      data: (txs) {
+        if (txs.isEmpty) {
+          return Container(
+            height: 100,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4F4F5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE4E4E7)),
+            ),
+            child: const Text(
+              'Aucune transaction prévue.',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: 120,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: txs.length,
+            separatorBuilder: (_, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final tx = txs[index];
+              return Container(
+                width: 200,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE4E4E7)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tx.description ?? 'Abonnement',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          formatter.format(tx.amount / 100),
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 13,
+                            color: tx.amount < 0 ? Colors.red : Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => ref
+                                .read(transactionProvider.notifier)
+                                .deleteTransaction(tx.id),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 30),
+                              foregroundColor: Colors.grey,
+                            ),
+                            child: const Text(
+                              'IGNORER',
+                              style: TextStyle(fontSize: 10),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => ref
+                                .read(transactionProvider.notifier)
+                                .clearTransaction(tx.id),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 30),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            child: const Text(
+                              'PAYÉ',
+                              style: TextStyle(fontSize: 10),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, _) => Text('Error: $err'),
     );
   }
 }

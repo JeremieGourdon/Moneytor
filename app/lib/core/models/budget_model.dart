@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import '../database/sqlite_bool_converter.dart';
 
 part 'budget_model.g.dart';
 
@@ -11,7 +12,10 @@ class BudgetModel {
   final int defaultAmount; // in cents
   final String? icon;
   final String? color;
-  final bool isSystem;
+
+  @SQLiteBoolConverter()
+  final bool isDefault;
+
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;
@@ -24,7 +28,7 @@ class BudgetModel {
     required this.defaultAmount,
     this.icon,
     this.color,
-    this.isSystem = false,
+    this.isDefault = false,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,

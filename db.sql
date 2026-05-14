@@ -3,7 +3,7 @@
 -- ==========================================
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TYPE account_type AS ENUM ('checking', 'savings_locked');
+CREATE TYPE account_type AS ENUM ('checking', 'savings');
 CREATE TYPE transaction_status AS ENUM ('pending', 'cleared');
 CREATE TYPE transaction_type AS ENUM ('income', 'expense', 'transfer');
 
@@ -50,6 +50,7 @@ CREATE TABLE financial_periods (
 CREATE TABLE users (
     id UUID PRIMARY KEY,
     household_id UUID NOT NULL REFERENCES households(id),
+    shared_household_id UUID REFERENCES households(id),
     first_name VARCHAR NOT NULL,
     role VARCHAR DEFAULT 'member',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -65,6 +66,7 @@ CREATE TABLE accounts (
     name VARCHAR NOT NULL,
     type account_type DEFAULT 'checking',
     is_public BOOLEAN DEFAULT true,
+    is_default BOOLEAN DEFAULT false,
     CONSTRAINT joint_must_be_public CHECK (
         (owner_id IS NULL AND is_public IS TRUE) OR (owner_id IS NOT NULL)
     ),
@@ -82,7 +84,7 @@ CREATE TABLE budgets (
     default_amount BIGINT NOT NULL DEFAULT 0,
     icon VARCHAR, -- Lucide icon identifier
     color VARCHAR, -- Hex code
-    is_system BOOLEAN DEFAULT false,
+    is_default BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     deleted_at TIMESTAMP WITH TIME ZONE NULL

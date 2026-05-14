@@ -28,7 +28,7 @@ final class AccountsProvider
         argument: null,
         retry: null,
         name: r'accountsProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -48,7 +48,7 @@ final class AccountsProvider
   }
 }
 
-String _$accountsHash() => r'ad9112f7bc06e84137e00584c8b338dd44d95cf6';
+String _$accountsHash() => r'35dfd65ef3418a0bd84c9a794890c61d76e9c77c';
 
 @ProviderFor(accountBalance)
 final accountBalanceProvider = AccountBalanceFamily._();
@@ -130,7 +130,7 @@ final class AccountNotifierProvider
         argument: null,
         retry: null,
         name: r'accountProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -143,7 +143,7 @@ final class AccountNotifierProvider
   AccountNotifier create() => AccountNotifier();
 }
 
-String _$accountNotifierHash() => r'8a594c1074666ec291e790ab9b51922c915e7d35';
+String _$accountNotifierHash() => r'ca6083d247715fa0cd3f3a49fe88fd9052dac897';
 
 abstract class _$AccountNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();

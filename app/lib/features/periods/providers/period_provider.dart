@@ -6,7 +6,7 @@ import '../repositories/financial_period_repository.dart';
 
 part 'period_provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<FinancialPeriodModel?> currentPeriod(Ref ref) {
   final household = ref.watch(householdProvider).value;
   if (household == null) return Stream.value(null);
@@ -17,57 +17,108 @@ Stream<FinancialPeriodModel?> currentPeriod(Ref ref) {
 }
 
 @riverpod
+Stream<List<FinancialPeriodModel>> allPeriods(Ref ref) {
+  final household = ref.watch(householdProvider).value;
+  if (household == null) return Stream.value([]);
+
+  return ref
+      .watch(financialPeriodRepositoryProvider)
+      .watchPeriods(household.id);
+}
+
+@riverpod
 class PeriodNotifier extends _$PeriodNotifier {
   @override
-  FutureOr<void> build() {}
-
-  /// Pushes the start of the next period by +1 day, effectively extending the current one.
-  Future<void> delayPeriod() async {
+  FutureOr<void> build() async {
+    // Check if we need to auto-initialize the first period
     final household = await ref.read(householdProvider.future);
     if (household == null) return;
 
     final current = await ref.read(currentPeriodProvider.future);
-    if (current == null) return;
+    if (current == null) {
+      // Auto-start on the 1st of the current month,
+      // but NOT before the household was created.
+      final now = DateTime.now().toUtc();
+      DateTime start = DateTime.utc(now.year, now.month, 1);
 
-    // To delay, we just need to extend the current period if it's nearing its end.
-    // In our model, end_date is NULL for the current period.
-    // So "Delay" really means: "I'm not ready to start the next one yet".
-    // If the next one is already scheduled or auto-started, we would adjust it.
-    // For now, let's implement 'Adjust current start' which is what a mid-month user needs.
+      if (start.isBefore(household.createdAt)) {
+        start = household.createdAt;
+      }
+
+      await startNextPeriod(customStartDate: start);
+    }
   }
 
-  /// Starts a new financial period.
+  /// Pushes the start of the next period by +1 day.
+  /// Effectively, if the next period hasn't started yet, we just wait.
+  /// In our model, we just need to know when we WANT to start.
+  Future<void> delayPeriod() async {
+    // This will be handled by the UI "Start Next" action.
+    // If user clicks "Delay", they simply don't click "Start Next".
+  }
+
+  /// Starts a new financial period, automatically closing the previous one.
   Future<void> startNextPeriod({DateTime? customStartDate}) async {
     final household = await ref.read(householdProvider.future);
     if (household == null) return;
 
-    final now = DateTime.now().toUtc();
-    final startDate = customStartDate ?? now;
-    
-    // Name based on month/year
-    final name = DateFormat('MMMM yyyy').format(startDate);
+    DateTime startDate = (customStartDate ?? DateTime.now()).toUtc();
 
-    await ref.read(financialPeriodRepositoryProvider).startNewPeriod(
-          household.id,
-          name,
-          startDate,
-        );
-    
-    // Refresh to show the new period
+    // Clamp to household creation date
+    if (startDate.isBefore(household.createdAt)) {
+      startDate = household.createdAt;
+    }
+
+    // Improve Naming: Try to increment from the last period's name
+    final periods = await ref.read(allPeriodsProvider.future);
+    String name;
+
+    if (periods.isNotEmpty) {
+      final lastPeriod =
+          periods.first; // allPeriods is ORDER BY start_date DESC
+      try {
+        final lastDate = DateFormat('MMMM yyyy').parse(lastPeriod.name);
+        final nextDate = DateTime(lastDate.year, lastDate.month + 1);
+        name = DateFormat('MMMM yyyy').format(nextDate);
+      } catch (_) {
+        name = DateFormat('MMMM yyyy').format(startDate);
+      }
+    } else {
+      // First period ever
+      name = DateFormat('MMMM yyyy').format(startDate);
+    }
+
+    await ref
+        .read(financialPeriodRepositoryProvider)
+        .startNewPeriod(household.id, name, startDate);
+
     ref.invalidate(currentPeriodProvider);
+    ref.invalidate(allPeriodsProvider);
   }
 
-  /// Adjusts the start date of the current period (Useful for mid-month onboarding).
-  Future<void> adjustCurrentStart(DateTime newStart) async {
-    final current = await ref.read(currentPeriodProvider.future);
-    if (current == null) return;
+  /// Adjusts the end date of a period, which shifts the start of the next one.
+  Future<void> adjustPeriodEnd(String periodId, DateTime newEnd) async {
+    final household = await ref.read(householdProvider.future);
+    if (household == null) return;
 
-    await ref.read(financialPeriodRepositoryProvider).updatePeriodDates(
-          current.id,
-          newStart,
-          current.endDate,
-        );
-    
+    DateTime adjustedEnd = newEnd.toUtc();
+
+    // Safety check: Cannot end a period before it starts or before household creation
+    // The repository handles contiguity, but we can clamp here too.
+    if (adjustedEnd.isBefore(household.createdAt)) {
+      adjustedEnd = household.createdAt;
+    }
+
+    await ref
+        .read(financialPeriodRepositoryProvider)
+        .updatePeriodEnd(periodId, adjustedEnd, household.id);
+
     ref.invalidate(currentPeriodProvider);
+    ref.invalidate(allPeriodsProvider);
+  }
+
+  /// Global setting: update the default month start day.
+  Future<void> updateDefaultStartDay(int day) async {
+    await ref.read(householdProvider.notifier).updateDefaultStartDay(day);
   }
 }

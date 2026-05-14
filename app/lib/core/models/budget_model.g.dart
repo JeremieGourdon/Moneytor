@@ -14,7 +14,9 @@ BudgetModel _$BudgetModelFromJson(Map<String, dynamic> json) => BudgetModel(
   defaultAmount: (json['default_amount'] as num).toInt(),
   icon: json['icon'] as String?,
   color: json['color'] as String?,
-  isSystem: json['is_system'] as bool? ?? false,
+  isDefault: json['is_default'] == null
+      ? false
+      : const SQLiteBoolConverter().fromJson(json['is_default']),
   createdAt: DateTime.parse(json['created_at'] as String),
   updatedAt: DateTime.parse(json['updated_at'] as String),
   deletedAt: json['deleted_at'] == null
@@ -31,7 +33,7 @@ Map<String, dynamic> _$BudgetModelToJson(BudgetModel instance) =>
       'default_amount': instance.defaultAmount,
       'icon': instance.icon,
       'color': instance.color,
-      'is_system': instance.isSystem,
+      'is_default': const SQLiteBoolConverter().toJson(instance.isDefault),
       'created_at': instance.createdAt.toIso8601String(),
       'updated_at': instance.updatedAt.toIso8601String(),
       'deleted_at': instance.deletedAt?.toIso8601String(),

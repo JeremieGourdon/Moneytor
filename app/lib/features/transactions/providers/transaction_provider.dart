@@ -10,6 +10,16 @@ import '../repositories/transaction_repository.dart';
 
 part 'transaction_provider.g.dart';
 
+@Riverpod(keepAlive: true)
+Stream<List<TransactionModel>> pendingTransactions(Ref ref) {
+  final household = ref.watch(householdProvider).value;
+  if (household == null) return Stream.value([]);
+
+  return ref
+      .watch(transactionRepositoryProvider)
+      .watchPendingTransactions(household.id);
+}
+
 @riverpod
 class TransactionNotifier extends _$TransactionNotifier {
   @override
@@ -18,6 +28,7 @@ class TransactionNotifier extends _$TransactionNotifier {
   Future<void> addTransaction({
     required String accountId,
     required String budgetId,
+    String? projectId,
     required int amount, // in cents
     required bool isExpense,
     String? note,
@@ -31,6 +42,7 @@ class TransactionNotifier extends _$TransactionNotifier {
       householdId: household.id,
       accountId: accountId,
       budgetId: budgetId,
+      projectId: projectId,
       createdBy: user.id,
       amount: isExpense ? -amount.abs() : amount.abs(),
       transactionDate: DateTime.now().toUtc(),
@@ -42,10 +54,18 @@ class TransactionNotifier extends _$TransactionNotifier {
 
     await ref.read(transactionRepositoryProvider).createTransaction(tx);
   }
+
+  Future<void> clearTransaction(String id) async {
+    await ref.read(transactionRepositoryProvider).clearTransaction(id);
+  }
+
+  Future<void> deleteTransaction(String id) async {
+    await ref.read(transactionRepositoryProvider).deleteTransaction(id);
+  }
 }
 
 /// A provider that calculates the RAV (Disposable Income) for an account.
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<int> disposableIncome(Ref ref, String accountId) async* {
   final household = ref.watch(householdProvider).value;
   final period = ref.watch(currentPeriodProvider).value;
@@ -56,14 +76,11 @@ Stream<int> disposableIncome(Ref ref, String accountId) async* {
 
   final repository = ref.watch(transactionRepositoryProvider);
   final budgets = ref.watch(allBudgetsProvider).value ?? [];
-  final accountBudgets =
-      budgets.where((b) => b.accountId == accountId).toList();
+  final accountBudgets = budgets
+      .where((b) => b.accountId == accountId)
+      .toList();
 
-  // Watch for ANY transaction changes in the household to trigger recalculation
-  yield* repository.dbService.watch(
-    'SELECT * FROM transactions WHERE household_id = ? AND deleted_at IS NULL',
-    [household.id],
-  ).asyncMap((_) async {
+  Future<int> calculate() async {
     // 1. Get Real Balance (sum of cleared transactions for the account)
     final realBalance = await repository.getRealBalance(accountId);
 
@@ -93,35 +110,41 @@ Stream<int> disposableIncome(Ref ref, String accountId) async* {
     }
 
     return realBalance - plannedDeduction;
-  });
+  }
+
+  // Yield initial value immediately
+  yield await calculate();
+
+  // Then watch for ANY transaction changes in the household to trigger recalculation
+  yield* repository.dbService
+      .watch('SELECT 1 FROM transactions WHERE household_id = ? LIMIT 1', [
+        household.id,
+      ])
+      .asyncMap((_) => calculate());
 }
 
-@riverpod
-Stream<int> totalDisposableIncome(Ref ref) async* {
-  final accountsList = ref.watch(accountsProvider).value ?? [];
-  final checkingAccounts =
-      accountsList.where((a) => a.type == 'checking').toList();
+@Riverpod(keepAlive: true)
+int totalDisposableIncome(Ref ref) {
+  final accountsAsync = ref.watch(accountsProvider);
 
-  if (checkingAccounts.isEmpty) {
-    yield 0;
-    return;
+  // Use .value to get the latest data, or return 0 if still loading initial list
+  final accountsList = accountsAsync.value ?? [];
+  // Include both checking and savings as they are considered liquid "available" money
+  final liquidAccounts = accountsList
+      .where((a) => a.type == 'checking' || a.type == 'savings')
+      .toList();
+
+  if (liquidAccounts.isEmpty) {
+    return 0;
   }
 
-  final household = ref.watch(householdProvider).value;
-  if (household == null) {
-    yield 0;
-    return;
+  int total = 0;
+
+  for (final account in liquidAccounts) {
+    final ravAsync = ref.watch(disposableIncomeProvider(account.id));
+    // If it's loading, we just use 0 for now to avoid the whole total being "loading"
+    total += ravAsync.value ?? 0;
   }
 
-  final repository = ref.watch(transactionRepositoryProvider);
-  yield* repository.dbService.watch(
-    'SELECT 1', // Trigger on any write
-  ).asyncMap((_) async {
-    int total = 0;
-    for (final account in checkingAccounts) {
-      final rav = await ref.read(disposableIncomeProvider(account.id).future);
-      total += rav;
-    }
-    return total;
-  });
+  return total;
 }

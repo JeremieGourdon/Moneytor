@@ -6,42 +6,28 @@ class HouseholdSetupScreen extends ConsumerStatefulWidget {
   const HouseholdSetupScreen({super.key});
 
   @override
-  ConsumerState<HouseholdSetupScreen> createState() => _HouseholdSetupScreenState();
+  ConsumerState<HouseholdSetupScreen> createState() =>
+      _HouseholdSetupScreenState();
 }
 
 class _HouseholdSetupScreenState extends ConsumerState<HouseholdSetupScreen> {
-  final _nameController = TextEditingController();
   final _tokenController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _nameController.dispose();
     _tokenController.dispose();
     super.dispose();
-  }
-
-  Future<void> _handleCreate() async {
-    if (_nameController.text.isEmpty) return;
-    setState(() => _isLoading = true);
-    try {
-      await ref.read(householdProvider.notifier).createHousehold(_nameController.text);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
   }
 
   Future<void> _handleJoin() async {
     if (_tokenController.text.isEmpty) return;
     setState(() => _isLoading = true);
     try {
-      await ref.read(householdProvider.notifier).acceptInvitation(_tokenController.text);
+      await ref
+          .read(householdProvider.notifier)
+          .acceptInvitation(_tokenController.text);
+      if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -56,49 +42,39 @@ class _HouseholdSetupScreenState extends ConsumerState<HouseholdSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('SETUP HOUSEHOLD')),
+      appBar: AppBar(title: const Text('REJOINDRE UN FOYER')),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Create a new household to start tracking together.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Household Name',
-                hintText: 'e.g., The Gourdon Home',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _handleCreate,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white),
-              child: const Text('CREATE HOUSEHOLD'),
-            ),
-            const SizedBox(height: 48),
-            const Text(
-              'OR join an existing one using an invitation token.',
+              'Saisissez le jeton d\'invitation partagé par un autre membre pour rejoindre son foyer.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             TextField(
               controller: _tokenController,
               decoration: const InputDecoration(
-                labelText: 'Invitation Token',
+                labelText: 'Jeton d\'Invitation',
+                hintText: 'UUID du jeton',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
-            OutlinedButton(
+            ElevatedButton(
               onPressed: _isLoading ? null : _handleJoin,
-              style: OutlinedButton.styleFrom(foregroundColor: Colors.black),
-              child: const Text('JOIN HOUSEHOLD'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Text('REJOINDRE LE FOYER'),
+            ),
+            const SizedBox(height: 24),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('ANNULER', style: TextStyle(color: Colors.grey)),
             ),
           ],
         ),

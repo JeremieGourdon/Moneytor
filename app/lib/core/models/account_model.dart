@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import '../database/sqlite_bool_converter.dart';
 
 part 'account_model.g.dart';
 
@@ -9,8 +10,15 @@ class AccountModel {
   final String? ownerId;
   final String name;
   final String type;
+
+  @SQLiteBoolConverter()
   final bool isPublic;
+
+  @SQLiteBoolConverter()
+  final bool isDefault;
+
   final DateTime createdAt;
+
   final DateTime updatedAt;
   final DateTime? deletedAt;
 
@@ -21,6 +29,7 @@ class AccountModel {
     required this.name,
     this.type = 'checking',
     this.isPublic = true,
+    this.isDefault = false,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -35,6 +44,7 @@ class AccountModel {
     String? name,
     String? type,
     bool? isPublic,
+    bool? isDefault,
   }) {
     return AccountModel(
       id: id,
@@ -43,8 +53,9 @@ class AccountModel {
       name: name ?? this.name,
       type: type ?? this.type,
       isPublic: isPublic ?? this.isPublic,
+      isDefault: isDefault ?? this.isDefault,
       createdAt: createdAt,
-      updatedAt: DateTime.now(),
+      updatedAt: DateTime.now().toUtc(),
       deletedAt: deletedAt,
     );
   }

@@ -7,10 +7,7 @@ import '../../features/dashboard/widgets/quick_add_sheet.dart';
 class MainLayout extends ConsumerWidget {
   final Widget child;
 
-  const MainLayout({
-    super.key,
-    required this.child,
-  });
+  const MainLayout({super.key, required this.child});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

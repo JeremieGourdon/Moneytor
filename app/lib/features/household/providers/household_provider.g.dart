@@ -20,7 +20,7 @@ final class HouseholdNotifierProvider
         argument: null,
         retry: null,
         name: r'householdProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -33,7 +33,7 @@ final class HouseholdNotifierProvider
   HouseholdNotifier create() => HouseholdNotifier();
 }
 
-String _$householdNotifierHash() => r'be0d83d7edcec2ab6b83ce315ff5dae545ccea4a';
+String _$householdNotifierHash() => r'0acc4c1433d26362b74649df8e70a3ba8bbd13d0';
 
 abstract class _$HouseholdNotifier extends $AsyncNotifier<HouseholdModel?> {
   FutureOr<HouseholdModel?> build();
@@ -52,3 +52,42 @@ abstract class _$HouseholdNotifier extends $AsyncNotifier<HouseholdModel?> {
     element.handleCreate(ref, build);
   }
 }
+
+@ProviderFor(sharedHousehold)
+final sharedHouseholdProvider = SharedHouseholdProvider._();
+
+final class SharedHouseholdProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<HouseholdModel?>,
+          HouseholdModel?,
+          FutureOr<HouseholdModel?>
+        >
+    with $FutureModifier<HouseholdModel?>, $FutureProvider<HouseholdModel?> {
+  SharedHouseholdProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'sharedHouseholdProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$sharedHouseholdHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<HouseholdModel?> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<HouseholdModel?> create(Ref ref) {
+    return sharedHousehold(ref);
+  }
+}
+
+String _$sharedHouseholdHash() => r'0c0fb8014fefdabe7d4014f7d433a694681f2481';

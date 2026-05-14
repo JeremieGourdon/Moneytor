@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import '../database/sqlite_bool_converter.dart';
 
 part 'transaction_model.g.dart';
 
@@ -16,8 +17,13 @@ class TransactionModel {
   final String? description;
   final String type; // 'income', 'expense', 'transfer'
   final String status; // 'pending', 'cleared'
+
+  @SQLiteBoolConverter()
   final bool isReconciliation;
+
+  @SQLiteBoolConverter()
   final bool ignoreInBalances;
+
   final String? linkedTransactionId;
   final DateTime createdAt;
   final DateTime updatedAt;

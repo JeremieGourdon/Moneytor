@@ -20,8 +20,12 @@ TransactionModel _$TransactionModelFromJson(Map<String, dynamic> json) =>
       description: json['description'] as String?,
       type: json['type'] as String? ?? 'expense',
       status: json['status'] as String? ?? 'cleared',
-      isReconciliation: json['is_reconciliation'] as bool? ?? false,
-      ignoreInBalances: json['ignore_in_balances'] as bool? ?? false,
+      isReconciliation: json['is_reconciliation'] == null
+          ? false
+          : const SQLiteBoolConverter().fromJson(json['is_reconciliation']),
+      ignoreInBalances: json['ignore_in_balances'] == null
+          ? false
+          : const SQLiteBoolConverter().fromJson(json['ignore_in_balances']),
       linkedTransactionId: json['linked_transaction_id'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
@@ -44,8 +48,12 @@ Map<String, dynamic> _$TransactionModelToJson(TransactionModel instance) =>
       'description': instance.description,
       'type': instance.type,
       'status': instance.status,
-      'is_reconciliation': instance.isReconciliation,
-      'ignore_in_balances': instance.ignoreInBalances,
+      'is_reconciliation': const SQLiteBoolConverter().toJson(
+        instance.isReconciliation,
+      ),
+      'ignore_in_balances': const SQLiteBoolConverter().toJson(
+        instance.ignoreInBalances,
+      ),
       'linked_transaction_id': instance.linkedTransactionId,
       'created_at': instance.createdAt.toIso8601String(),
       'updated_at': instance.updatedAt.toIso8601String(),

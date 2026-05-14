@@ -9,6 +9,48 @@ part of 'transaction_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(pendingTransactions)
+final pendingTransactionsProvider = PendingTransactionsProvider._();
+
+final class PendingTransactionsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<TransactionModel>>,
+          List<TransactionModel>,
+          Stream<List<TransactionModel>>
+        >
+    with
+        $FutureModifier<List<TransactionModel>>,
+        $StreamProvider<List<TransactionModel>> {
+  PendingTransactionsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'pendingTransactionsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$pendingTransactionsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<TransactionModel>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<TransactionModel>> create(Ref ref) {
+    return pendingTransactions(ref);
+  }
+}
+
+String _$pendingTransactionsHash() =>
+    r'0319e15af752022011f85ca92848d5f75ffe52a0';
+
 @ProviderFor(TransactionNotifier)
 final transactionProvider = TransactionNotifierProvider._();
 
@@ -34,7 +76,7 @@ final class TransactionNotifierProvider
 }
 
 String _$transactionNotifierHash() =>
-    r'786cdc0dbea5563724daeadf35ae4cac4847343e';
+    r'd3f07adc51e2fe35d02d823c7236b2edba335196';
 
 abstract class _$TransactionNotifier extends $AsyncNotifier<void> {
   FutureOr<void> build();
@@ -71,7 +113,7 @@ final class DisposableIncomeProvider
   }) : super(
          retry: null,
          name: r'disposableIncomeProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -108,7 +150,7 @@ final class DisposableIncomeProvider
   }
 }
 
-String _$disposableIncomeHash() => r'53926f7ade8e404ad530412f5717136bf4eb0f65';
+String _$disposableIncomeHash() => r'bafe42ecc054c91f91fbeeb3c4bdd148d7e9d04a';
 
 /// A provider that calculates the RAV (Disposable Income) for an account.
 
@@ -120,7 +162,7 @@ final class DisposableIncomeFamily extends $Family
         name: r'disposableIncomeProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   /// A provider that calculates the RAV (Disposable Income) for an account.
@@ -136,15 +178,15 @@ final class DisposableIncomeFamily extends $Family
 final totalDisposableIncomeProvider = TotalDisposableIncomeProvider._();
 
 final class TotalDisposableIncomeProvider
-    extends $FunctionalProvider<AsyncValue<int>, int, Stream<int>>
-    with $FutureModifier<int>, $StreamProvider<int> {
+    extends $FunctionalProvider<int, int, int>
+    with $Provider<int> {
   TotalDisposableIncomeProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'totalDisposableIncomeProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -154,14 +196,22 @@ final class TotalDisposableIncomeProvider
 
   @$internal
   @override
-  $StreamProviderElement<int> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
+  $ProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
-  Stream<int> create(Ref ref) {
+  int create(Ref ref) {
     return totalDisposableIncome(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
   }
 }
 
 String _$totalDisposableIncomeHash() =>
-    r'9f1776c4a87333bcbe843502a8c71084a1f008cf';
+    r'ae0bd54e598748f8197e808eb8f12c463c1e2129';

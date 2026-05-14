@@ -6,6 +6,7 @@ part 'user_model.g.dart';
 class UserModel {
   final String id;
   final String householdId;
+  final String? sharedHouseholdId;
   final String firstName;
   final String role;
   final DateTime createdAt;
@@ -15,6 +16,7 @@ class UserModel {
   UserModel({
     required this.id,
     required this.householdId,
+    this.sharedHouseholdId,
     required this.firstName,
     required this.role,
     required this.createdAt,

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../accounts/providers/account_provider.dart';
 import '../../budgets/providers/budget_provider.dart';
+import '../../projects/providers/project_provider.dart';
 import '../../transactions/providers/transaction_provider.dart';
 
 class QuickAddSheet extends ConsumerStatefulWidget {
@@ -22,6 +23,7 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
   String? _selectedAccountId;
   String? _selectedBudgetId;
+  String? _selectedProjectId;
 
   void _handleKeyPress(String value) {
     setState(() {
@@ -56,9 +58,12 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
 
     if (amountCents == 0) return;
 
-    await ref.read(transactionProvider.notifier).addTransaction(
+    await ref
+        .read(transactionProvider.notifier)
+        .addTransaction(
           accountId: _selectedAccountId!,
           budgetId: _selectedBudgetId!,
+          projectId: _selectedProjectId,
           amount: amountCents,
           isExpense: _isExpense,
           note: _noteController.text.isEmpty ? null : _noteController.text,
@@ -84,6 +89,8 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     if (_selectedBudgetId == null && budgets.isNotEmpty) {
       _selectedBudgetId = budgets.first.id;
     }
+
+    final projects = ref.watch(allProjectsProvider).value ?? [];
 
     return KeyboardListener(
       focusNode: _keyboardFocusNode,
@@ -112,82 +119,166 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildTypeToggle('EXPENSE', true),
-                const SizedBox(width: 16),
-                _buildTypeToggle('INCOME', false),
-              ],
-            ),
-            const SizedBox(height: 32),
-            Text(
-              '$_amountStr €',
-              style: GoogleFonts.jetBrainsMono(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildTypeToggle('DÉPENSE', true),
+                  const SizedBox(width: 16),
+                  _buildTypeToggle('REVENU', false),
+                ],
               ),
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _noteController,
-              decoration: const InputDecoration(
-                hintText: 'Add a note...',
-                border: InputBorder.none,
-              ),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSelector(
-                    'Account',
-                    accounts
-                            .where((a) => a.id == _selectedAccountId)
-                            .firstOrNull
-                            ?.name ??
-                        (accounts.isNotEmpty ? accounts.first.name : 'Checking'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildSelector(
-                    'Budget',
-                    budgets
-                            .where((b) => b.id == _selectedBudgetId)
-                            .firstOrNull
-                            ?.name ??
-                        (budgets.isNotEmpty ? budgets.first.name : 'Unplanned'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            _buildKeypad(),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _handleValidate,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 60),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(
-                'VALIDATE',
+              const SizedBox(height: 32),
+              Text(
+                '$_amountStr €',
                 style: GoogleFonts.jetBrainsMono(
-                    fontWeight: FontWeight.bold, letterSpacing: 2),
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+              TextField(
+                controller: _noteController,
+                decoration: const InputDecoration(
+                  hintText: 'Ajouter une note...',
+                  border: InputBorder.none,
+                ),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSelector(
+                      'Compte',
+                      accounts
+                              .where((a) => a.id == _selectedAccountId)
+                              .firstOrNull
+                              ?.name ??
+                          'Sélectionner',
+                      onTap: () => _showAccountPicker(accounts),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildSelector(
+                      'Enveloppe',
+                      budgets
+                              .where((b) => b.id == _selectedBudgetId)
+                              .firstOrNull
+                              ?.name ??
+                          'Unplanned',
+                      onTap: () => _showBudgetPicker(budgets),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildSelector(
+                'Projet (Optionnel)',
+                projects
+                        .where((p) => p.id == _selectedProjectId)
+                        .firstOrNull
+                        ?.name ??
+                    'Aucun',
+                onTap: () => _showProjectPicker(projects),
+              ),
+              const SizedBox(height: 32),
+              _buildKeypad(),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _handleValidate,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 60),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'VALIDER',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  void _showAccountPicker(List accounts) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => ListView(
+        shrinkWrap: true,
+        children: accounts
+            .map(
+              (a) => ListTile(
+                title: Text(a.name),
+                onTap: () {
+                  setState(() => _selectedAccountId = a.id);
+                  Navigator.pop(context);
+                },
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+
+  void _showBudgetPicker(List budgets) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => ListView(
+        shrinkWrap: true,
+        children: budgets
+            .map(
+              (b) => ListTile(
+                title: Text(b.name),
+                onTap: () {
+                  setState(() => _selectedBudgetId = b.id);
+                  Navigator.pop(context);
+                },
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+
+  void _showProjectPicker(List projects) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => ListView(
+        shrinkWrap: true,
+        children: [
+          ListTile(
+            title: const Text('Aucun'),
+            onTap: () {
+              setState(() => _selectedProjectId = null);
+              Navigator.pop(context);
+            },
+          ),
+          ...projects.map(
+            (p) => ListTile(
+              title: Text(p.name),
+              onTap: () {
+                setState(() => _selectedProjectId = p.id);
+                Navigator.pop(context);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -215,34 +306,49 @@ class _QuickAddSheetState extends ConsumerState<QuickAddSheet> {
     );
   }
 
-  Widget _buildSelector(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[200]!),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label,
+  Widget _buildSelector(String label, String value, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[200]!),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
               style: const TextStyle(
-                  fontSize: 10,
+                fontSize: 10,
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Icon(
+                  LucideIcons.chevron_down,
+                  size: 14,
                   color: Colors.grey,
-                  fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                  child: Text(value,
-                      style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis)),
-              const Icon(LucideIcons.chevron_down, size: 14, color: Colors.grey),
-            ],
-          ),
-        ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
