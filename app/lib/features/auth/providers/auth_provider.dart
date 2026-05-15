@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../repositories/auth_repository.dart';
@@ -5,13 +6,21 @@ import '../repositories/auth_repository.dart';
 part 'auth_provider.g.dart';
 
 @Riverpod(keepAlive: true)
-class AuthStateNotifier extends _$AuthStateNotifier {
+class AuthState extends _$AuthState {
   @override
-  Stream<User?> build() {
-    final repository = ref.watch(authRepositoryProvider);
-    return repository.authStateChanges
-        .map((event) => event.session?.user)
-        .asBroadcastStream();
+  FutureOr<User?> build() {
+    final client = Supabase.instance.client;
+
+    // Listen for auth state changes and update our state manually
+    final subscription = client.auth.onAuthStateChange.listen((data) {
+      state = AsyncValue.data(data.session?.user);
+    });
+
+    ref.onDispose(() => subscription.cancel());
+
+    // Return the current user immediately. 
+    // Since Supabase.initialize() is called in main(), this is available.
+    return client.auth.currentUser;
   }
 
   Future<void> signIn(String email, String password) async {

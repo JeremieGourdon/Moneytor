@@ -9,11 +9,11 @@ part 'profile_provider.g.dart';
 class ProfileNotifier extends _$ProfileNotifier {
   @override
   FutureOr<UserModel?> build() async {
-    final authState = await ref.watch(authStateProvider.future);
-    if (authState == null) return null;
+    final authUser = await ref.watch(authStateProvider.future);
+    if (authUser == null) return null;
 
     final repository = ref.watch(profileRepositoryProvider);
-    return await repository.getProfile(authState.id);
+    return await repository.getProfile(authUser.id);
   }
 
   Future<void> updateProfile(UserModel user) async {

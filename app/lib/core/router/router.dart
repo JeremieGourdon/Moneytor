@@ -26,14 +26,15 @@ GoRouter router(Ref ref) {
   return GoRouter(
     initialLocation: '/dashboard',
     redirect: (context, state) {
+      // 1. Wait for initial session recovery
+      if (authState.isLoading) return null;
+
       final loggedIn = authState.value != null;
       final loggingIn = state.matchedLocation == '/login';
 
       if (!loggedIn) return loggingIn ? null : '/login';
 
-      // If we are logged in but profile is still loading,
-      // stay where we are (showing the splash/loading screen handled in routes if necessary,
-      // or simply letting the GoRouter wait)
+      // 2. Wait for profile to load (from local SQLite/PowerSync)
       if (profileAsync.isLoading) return null;
 
       // Redirect to onboarding if profile is "New User"

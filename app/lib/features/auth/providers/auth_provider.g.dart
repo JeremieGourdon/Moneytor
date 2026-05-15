@@ -9,12 +9,11 @@ part of 'auth_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(AuthStateNotifier)
-final authStateProvider = AuthStateNotifierProvider._();
+@ProviderFor(AuthState)
+final authStateProvider = AuthStateProvider._();
 
-final class AuthStateNotifierProvider
-    extends $StreamNotifierProvider<AuthStateNotifier, User?> {
-  AuthStateNotifierProvider._()
+final class AuthStateProvider extends $AsyncNotifierProvider<AuthState, User?> {
+  AuthStateProvider._()
     : super(
         from: null,
         argument: null,
@@ -26,17 +25,17 @@ final class AuthStateNotifierProvider
       );
 
   @override
-  String debugGetCreateSourceHash() => _$authStateNotifierHash();
+  String debugGetCreateSourceHash() => _$authStateHash();
 
   @$internal
   @override
-  AuthStateNotifier create() => AuthStateNotifier();
+  AuthState create() => AuthState();
 }
 
-String _$authStateNotifierHash() => r'7cb0f59bb59c789a20b29521eda7426c6a97ec53';
+String _$authStateHash() => r'63693d15f1bc11c66c7f30fa3815a394402ff131';
 
-abstract class _$AuthStateNotifier extends $StreamNotifier<User?> {
-  Stream<User?> build();
+abstract class _$AuthState extends $AsyncNotifier<User?> {
+  FutureOr<User?> build();
   @$mustCallSuper
   @override
   void runBuild() {
