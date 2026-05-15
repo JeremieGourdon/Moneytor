@@ -51,6 +51,8 @@ flutter_launcher_icons:
   remove_alpha_ios: true
   image_path: "assets/branding/app_icon.png"
   min_sdk_android: 21
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/branding/app_icon.png"
 
 flutter_native_splash:
   color: "#ffffff"
@@ -58,3 +60,12 @@ flutter_native_splash:
   android: true
   ios: true
   web: true
+  
+  # Reduce margins to make logo bigger
+  android_gravity: center
+  ios_content_mode: center
+  
+  android_12:
+    image: "assets/branding/splash_logo.png"
+    color: "#ffffff"
+    icon_background_color: "#ffffff"
