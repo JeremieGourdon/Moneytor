@@ -34,8 +34,8 @@ class TransactionNotifier extends _$TransactionNotifier {
     String? note,
   }) async {
     final household = await ref.read(householdProvider.future);
-    final user = await ref.read(authStateProvider.future);
-    if (household == null || user == null) return;
+    final authUser = await ref.read(authStateProvider.future);
+    if (household == null || authUser == null) return;
 
     final tx = TransactionModel(
       id: const Uuid().v4(),
@@ -43,7 +43,7 @@ class TransactionNotifier extends _$TransactionNotifier {
       accountId: accountId,
       budgetId: budgetId,
       projectId: projectId,
-      createdBy: user.id,
+      createdBy: authUser.id,
       amount: isExpense ? -amount.abs() : amount.abs(),
       transactionDate: DateTime.now().toUtc(),
       description: note,

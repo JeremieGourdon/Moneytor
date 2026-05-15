@@ -8,18 +8,18 @@ part 'auth_provider.g.dart';
 @Riverpod(keepAlive: true)
 class AuthState extends _$AuthState {
   @override
-  User? build() {
+  FutureOr<User?> build() {
     final client = Supabase.instance.client;
 
-    // Listen for auth state changes and update our state
+    // Listen for auth state changes and update our state manually
     final subscription = client.auth.onAuthStateChange.listen((data) {
-      state = data.session?.user;
+      state = AsyncValue.data(data.session?.user);
     });
 
     ref.onDispose(() => subscription.cancel());
 
-    // IMPORTANT: Return the current user immediately if already available
-    // after Supabase.initialize() has completed.
+    // Return the current user immediately. 
+    // Since Supabase.initialize() is called in main(), this is available.
     return client.auth.currentUser;
   }
 
