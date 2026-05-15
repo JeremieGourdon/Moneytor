@@ -9,12 +9,11 @@ part of 'auth_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(AuthStateNotifier)
-final authStateProvider = AuthStateNotifierProvider._();
+@ProviderFor(AuthState)
+final authStateProvider = AuthStateProvider._();
 
-final class AuthStateNotifierProvider
-    extends $StreamNotifierProvider<AuthStateNotifier, User?> {
-  AuthStateNotifierProvider._()
+final class AuthStateProvider extends $NotifierProvider<AuthState, User?> {
+  AuthStateProvider._()
     : super(
         from: null,
         argument: null,
@@ -26,26 +25,34 @@ final class AuthStateNotifierProvider
       );
 
   @override
-  String debugGetCreateSourceHash() => _$authStateNotifierHash();
+  String debugGetCreateSourceHash() => _$authStateHash();
 
   @$internal
   @override
-  AuthStateNotifier create() => AuthStateNotifier();
+  AuthState create() => AuthState();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(User? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<User?>(value),
+    );
+  }
 }
 
-String _$authStateNotifierHash() => r'7cb0f59bb59c789a20b29521eda7426c6a97ec53';
+String _$authStateHash() => r'ad85031fe350078deb984ab405adc08fc7a9aeba';
 
-abstract class _$AuthStateNotifier extends $StreamNotifier<User?> {
-  Stream<User?> build();
+abstract class _$AuthState extends $Notifier<User?> {
+  User? build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<User?>, User?>;
+    final ref = this.ref as $Ref<User?, User?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<User?>, User?>,
-              AsyncValue<User?>,
+              AnyNotifier<User?, User?>,
+              User?,
               Object?,
               Object?
             >;
