@@ -3,6 +3,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/dashboard/widgets/quick_add_sheet.dart';
+import '../../features/auth/providers/profile_provider.dart';
 
 class MainLayout extends ConsumerWidget {
   final Widget child;
@@ -11,6 +12,17 @@ class MainLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(profileProvider);
+
+    // If profile is loading or user is new (redirection to onboarding is pending),
+    // show a clean splash/loading state to prevent dashboard flash.
+    if (profileAsync.isLoading || profileAsync.value?.firstName == 'New User') {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(child: CircularProgressIndicator(color: Colors.black)),
+      );
+    }
+
     final location = GoRouterState.of(context).matchedLocation;
 
     return Scaffold(

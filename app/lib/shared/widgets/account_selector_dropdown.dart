@@ -62,7 +62,8 @@ class AccountSelectorDropdown extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          selectedAccount?.name.toUpperCase() ?? 'SELECT ACCOUNT',
+                          selectedAccount?.name.toUpperCase() ??
+                              'SELECT ACCOUNT',
                           style: const TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -74,9 +75,11 @@ class AccountSelectorDropdown extends ConsumerWidget {
                         Consumer(
                           builder: (context, ref, child) {
                             final balanceAsync = selectedAccount != null
-                                ? ref.watch(accountBalanceProvider(selectedAccount.id))
+                                ? ref.watch(
+                                    accountBalanceProvider(selectedAccount.id),
+                                  )
                                 : const AsyncValue.data(0);
-                            
+
                             return balanceAsync.when(
                               data: (balance) => Text(
                                 formatter.format(balance / 100.0),
@@ -88,9 +91,11 @@ class AccountSelectorDropdown extends ConsumerWidget {
                               loading: () => const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
-                              error: (_, ___) => const Text('---'),
+                              error: (_, _) => const Text('---'),
                             );
                           },
                         ),
@@ -108,7 +113,7 @@ class AccountSelectorDropdown extends ConsumerWidget {
         padding: EdgeInsets.symmetric(horizontal: 24.0),
         child: Center(child: CircularProgressIndicator(color: Colors.black)),
       ),
-      error: (_, ___) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 
@@ -122,10 +127,8 @@ class AccountSelectorDropdown extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _AccountPickerSheet(
-        accounts: accounts,
-        formatter: formatter,
-      ),
+      builder: (context) =>
+          _AccountPickerSheet(accounts: accounts, formatter: formatter),
     );
   }
 }
@@ -134,10 +137,7 @@ class _AccountPickerSheet extends ConsumerWidget {
   final List<AccountModel> accounts;
   final NumberFormat formatter;
 
-  const _AccountPickerSheet({
-    required this.accounts,
-    required this.formatter,
-  });
+  const _AccountPickerSheet({required this.accounts, required this.formatter});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -175,15 +175,19 @@ class _AccountPickerSheet extends ConsumerWidget {
               shrinkWrap: true,
               padding: const EdgeInsets.symmetric(horizontal: 24),
               itemCount: accounts.length,
-              separatorBuilder: (_, ___) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final account = accounts[index];
                 final isSelected = selectedAccount?.id == account.id;
-                final balanceAsync = ref.watch(accountBalanceProvider(account.id));
+                final balanceAsync = ref.watch(
+                  accountBalanceProvider(account.id),
+                );
 
                 return InkWell(
                   onTap: () {
-                    ref.read(selectedAccountIdProvider.notifier).select(account.id);
+                    ref
+                        .read(selectedAccountIdProvider.notifier)
+                        .select(account.id);
                     Navigator.pop(context);
                   },
                   borderRadius: BorderRadius.circular(12),
@@ -214,7 +218,9 @@ class _AccountPickerSheet extends ConsumerWidget {
                                 account.name,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: isSelected ? Colors.white : Colors.black,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.black,
                                 ),
                               ),
                               balanceAsync.when(
@@ -222,17 +228,23 @@ class _AccountPickerSheet extends ConsumerWidget {
                                   formatter.format(balance / 100.0),
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: isSelected ? Colors.white70 : Colors.grey,
+                                    color: isSelected
+                                        ? Colors.white70
+                                        : Colors.grey,
                                   ),
                                 ),
                                 loading: () => const SizedBox.shrink(),
-                                error: (_, ___) => const SizedBox.shrink(),
+                                error: (_, _) => const SizedBox.shrink(),
                               ),
                             ],
                           ),
                         ),
                         if (isSelected)
-                          const Icon(LucideIcons.check, color: Colors.white, size: 20),
+                          const Icon(
+                            LucideIcons.check,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                       ],
                     ),
                   ),
@@ -245,4 +257,3 @@ class _AccountPickerSheet extends ConsumerWidget {
     );
   }
 }
-

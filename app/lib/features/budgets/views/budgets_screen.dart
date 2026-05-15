@@ -21,7 +21,7 @@ class BudgetsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedAccount = ref.watch(selectedAccountProvider);
     final allBudgetsAsync = ref.watch(allBudgetsProvider);
-    
+
     final accountsAsync = ref.watch(accountsProvider);
     final currency = ref.watch(householdProvider).value?.currency ?? 'EUR';
     final formatter = NumberFormat.simpleCurrency(name: currency);
@@ -55,9 +55,9 @@ class BudgetsScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      selectedAccount != null 
-                        ? 'ENVELOPES FOR ${selectedAccount.name.toUpperCase()}'
-                        : 'YOUR ENVELOPES',
+                      selectedAccount != null
+                          ? 'ENVELOPES FOR ${selectedAccount.name.toUpperCase()}'
+                          : 'YOUR ENVELOPES',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -68,19 +68,28 @@ class BudgetsScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
                     allBudgetsAsync.when(
                       data: (allBudgets) {
-                        developer.log('BUDGETS SCREEN: Received ${allBudgets.length} total budgets from provider', name: 'budget.ui');
-                        
+                        developer.log(
+                          'BUDGETS SCREEN: Received ${allBudgets.length} total budgets from provider',
+                          name: 'budget.ui',
+                        );
+
                         final budgets = selectedAccount != null
                             ? allBudgets.where((b) {
                                 final match = b.accountId == selectedAccount.id;
                                 if (!match) {
-                                  developer.log('BUDGETS SCREEN: Filtering out budget ${b.name} (AccID: ${b.accountId}) vs Selected: ${selectedAccount.id}', name: 'budget.ui');
+                                  developer.log(
+                                    'BUDGETS SCREEN: Filtering out budget ${b.name} (AccID: ${b.accountId}) vs Selected: ${selectedAccount.id}',
+                                    name: 'budget.ui',
+                                  );
                                 }
                                 return match;
                               }).toList()
                             : <BudgetModel>[];
 
-                        developer.log('BUDGETS SCREEN: Displaying ${budgets.length} budgets for account ${selectedAccount?.name}', name: 'budget.ui');
+                        developer.log(
+                          'BUDGETS SCREEN: Displaying ${budgets.length} budgets for account ${selectedAccount?.name}',
+                          name: 'budget.ui',
+                        );
 
                         if (budgets.isEmpty) {
                           return const Center(
@@ -98,7 +107,8 @@ class BudgetsScreen extends ConsumerWidget {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: budgets.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 12),
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final budget = budgets[index];
                             return _buildBudgetCard(
@@ -165,7 +175,11 @@ class BudgetsScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (budget.isDefault)
-              const Icon(LucideIcons.circle_check, size: 16, color: Colors.green),
+              const Icon(
+                LucideIcons.circle_check,
+                size: 16,
+                color: Colors.green,
+              ),
             const SizedBox(width: 8),
             PopupMenuButton<String>(
               icon: const Icon(LucideIcons.ellipsis_vertical, size: 18),
@@ -201,11 +215,7 @@ class BudgetsScreen extends ConsumerWidget {
                   ),
               ],
             ),
-            const Icon(
-              LucideIcons.chevron_right,
-              size: 16,
-              color: Colors.grey,
-            ),
+            const Icon(LucideIcons.chevron_right, size: 16, color: Colors.grey),
           ],
         ),
         onTap: () => context.go('/budgets/detail', extra: budget),
@@ -232,9 +242,7 @@ class BudgetsScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () async {
-              await ref
-                  .read(budgetProvider.notifier)
-                  .deleteBudget(budget);
+              await ref.read(budgetProvider.notifier).deleteBudget(budget);
               if (context.mounted) Navigator.pop(context);
             },
             child: const Text('DELETE', style: TextStyle(color: Colors.red)),
@@ -267,7 +275,8 @@ class BudgetsScreen extends ConsumerWidget {
   }) {
     final nameController = TextEditingController();
     final amountController = TextEditingController();
-    String? selectedAccountId = initialAccountId ?? (accounts.isNotEmpty ? accounts.first.id : null);
+    String? selectedAccountId =
+        initialAccountId ?? (accounts.isNotEmpty ? accounts.first.id : null);
     String selectedIcon = 'folder';
 
     showDialog(

@@ -100,7 +100,9 @@ class TransactionRepository {
           "SELECT * FROM transactions WHERE household_id = ? AND status = 'pending' AND deleted_at IS NULL ORDER BY transaction_date ASC",
           [householdId],
         )
-        .map((rows) => rows.map((row) => TransactionModel.fromJson(row)).toList());
+        .map(
+          (rows) => rows.map((row) => TransactionModel.fromJson(row)).toList(),
+        );
   }
 }
 

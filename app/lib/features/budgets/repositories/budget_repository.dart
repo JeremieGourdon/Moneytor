@@ -11,30 +11,46 @@ class BudgetRepository {
   BudgetRepository(this._db);
 
   Stream<List<BudgetModel>> watchBudgets(String householdId) {
-    developer.log('DEBUG: watchBudgets called with householdId: $householdId', name: 'budget.repository');
-    return _db
-        .watch(
-          'SELECT * FROM budgets',
-          [],
-        )
-        .map((rows) {
-          developer.log('DEBUG: watchBudgets raw total rows in SQLite: ${rows.length}', name: 'budget.repository');
-          final filtered = rows.where((row) => row['household_id'] == householdId && row['deleted_at'] == null).toList();
-          developer.log('DEBUG: watchBudgets filtered rows: ${filtered.length}', name: 'budget.repository');
-          
-          for (final row in rows) {
-             developer.log('DEBUG: SQLite Row -> name: ${row['name']}, h_id: ${row['household_id']}, acc_id: ${row['account_id']}, deleted: ${row['deleted_at']}', name: 'budget.repository');
-          }
-          
-          return filtered.map((row) {
-            try {
-              return BudgetModel.fromJson(row);
-            } catch (e) {
-              developer.log('DEBUG: Error parsing budget row: $e', name: 'budget.repository', error: e);
-              rethrow;
-            }
-          }).toList();
-        });
+    developer.log(
+      'DEBUG: watchBudgets called with householdId: $householdId',
+      name: 'budget.repository',
+    );
+    return _db.watch('SELECT * FROM budgets', []).map((rows) {
+      developer.log(
+        'DEBUG: watchBudgets raw total rows in SQLite: ${rows.length}',
+        name: 'budget.repository',
+      );
+      final filtered = rows
+          .where(
+            (row) =>
+                row['household_id'] == householdId && row['deleted_at'] == null,
+          )
+          .toList();
+      developer.log(
+        'DEBUG: watchBudgets filtered rows: ${filtered.length}',
+        name: 'budget.repository',
+      );
+
+      for (final row in rows) {
+        developer.log(
+          'DEBUG: SQLite Row -> name: ${row['name']}, h_id: ${row['household_id']}, acc_id: ${row['account_id']}, deleted: ${row['deleted_at']}',
+          name: 'budget.repository',
+        );
+      }
+
+      return filtered.map((row) {
+        try {
+          return BudgetModel.fromJson(row);
+        } catch (e) {
+          developer.log(
+            'DEBUG: Error parsing budget row: $e',
+            name: 'budget.repository',
+            error: e,
+          );
+          rethrow;
+        }
+      }).toList();
+    });
   }
 
   /// Streams budgets linked to a specific account.

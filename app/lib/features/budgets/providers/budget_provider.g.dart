@@ -48,7 +48,7 @@ final class AllBudgetsProvider
   }
 }
 
-String _$allBudgetsHash() => r'42e8690d75069bd1a4cc0868fdbc3681562d9f6b';
+String _$allBudgetsHash() => r'3d9165bee72c912755ce663a72af12bfbca55f22';
 
 @ProviderFor(accountBudgets)
 final accountBudgetsProvider = AccountBudgetsFamily._();

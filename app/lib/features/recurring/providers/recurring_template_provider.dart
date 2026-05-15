@@ -11,7 +11,9 @@ Stream<List<RecurringTemplateModel>> allRecurringTemplates(Ref ref) {
   final household = ref.watch(householdProvider).value;
   if (household == null) return Stream.value([]);
 
-  return ref.watch(recurringTemplateRepositoryProvider).watchTemplates(household.id);
+  return ref
+      .watch(recurringTemplateRepositoryProvider)
+      .watchTemplates(household.id);
 }
 
 @riverpod
@@ -47,11 +49,15 @@ class RecurringTemplateNotifier extends _$RecurringTemplateNotifier {
       updatedAt: DateTime.now().toUtc(),
     );
 
-    await ref.read(recurringTemplateRepositoryProvider).createTemplate(template);
+    await ref
+        .read(recurringTemplateRepositoryProvider)
+        .createTemplate(template);
   }
 
   Future<void> updateTemplate(RecurringTemplateModel template) async {
-    await ref.read(recurringTemplateRepositoryProvider).updateTemplate(template);
+    await ref
+        .read(recurringTemplateRepositoryProvider)
+        .updateTemplate(template);
   }
 
   Future<void> deleteTemplate(String id) async {

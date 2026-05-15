@@ -23,6 +23,7 @@ dependencies:
   powersync: ^2.1.0
   purchases_flutter: ^10.0.2
   riverpod_annotation: ^4.0.2
+  shared_preferences: ^2.5.5
   shimmer: ^3.0.0
   sqlite_async: ^0.14.1
   supabase_flutter: ^2.12.4

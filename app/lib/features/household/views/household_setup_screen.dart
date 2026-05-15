@@ -74,7 +74,10 @@ class _HouseholdSetupScreenState extends ConsumerState<HouseholdSetupScreen> {
             const SizedBox(height: 24),
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('ANNULER', style: TextStyle(color: Colors.grey)),
+              child: const Text(
+                'ANNULER',
+                style: TextStyle(color: Colors.grey),
+              ),
             ),
           ],
         ),

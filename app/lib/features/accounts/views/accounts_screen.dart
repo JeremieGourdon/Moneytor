@@ -638,9 +638,7 @@ class _AccountsScreenState extends ConsumerState<AccountsScreen> {
           ),
           TextButton(
             onPressed: () async {
-              await ref
-                  .read(accountProvider.notifier)
-                  .deleteAccount(account);
+              await ref.read(accountProvider.notifier).deleteAccount(account);
               if (context.mounted) Navigator.pop(context);
             },
             child: const Text('DELETE', style: TextStyle(color: Colors.red)),

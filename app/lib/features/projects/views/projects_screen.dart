@@ -30,10 +30,7 @@ class ProjectsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'PROJECTS',
-          style: TextStyle(letterSpacing: 2),
-        ),
+        title: const Text('PROJECTS', style: TextStyle(letterSpacing: 2)),
       ),
       body: Column(
         children: [
@@ -43,26 +40,39 @@ class ProjectsScreen extends ConsumerWidget {
           Expanded(
             child: allProjectsAsync.when(
               data: (allProjects) {
-                developer.log('PROJECTS SCREEN: Received ${allProjects.length} total projects from provider', name: 'project.ui');
-                
+                developer.log(
+                  'PROJECTS SCREEN: Received ${allProjects.length} total projects from provider',
+                  name: 'project.ui',
+                );
+
                 final projects = selectedAccount != null
                     ? allProjects.where((p) {
                         final match = p.accountId == selectedAccount.id;
                         if (!match) {
-                          developer.log('PROJECTS SCREEN: Filtering out project ${p.name} (AccID: ${p.accountId}) vs Selected: ${selectedAccount.id}', name: 'project.ui');
+                          developer.log(
+                            'PROJECTS SCREEN: Filtering out project ${p.name} (AccID: ${p.accountId}) vs Selected: ${selectedAccount.id}',
+                            name: 'project.ui',
+                          );
                         }
                         return match;
                       }).toList()
                     : <ProjectModel>[];
 
-                developer.log('PROJECTS SCREEN: Displaying ${projects.length} projects for account ${selectedAccount?.name}', name: 'project.ui');
+                developer.log(
+                  'PROJECTS SCREEN: Displaying ${projects.length} projects for account ${selectedAccount?.name}',
+                  name: 'project.ui',
+                );
 
                 if (projects.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(LucideIcons.target, size: 64, color: Colors.grey),
+                        const Icon(
+                          LucideIcons.target,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(height: 16),
                         const Text(
                           'No projects for this account.',
@@ -70,7 +80,11 @@ class ProjectsScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 24),
                         ElevatedButton(
-                          onPressed: () => _showCreateProjectDialog(context, ref, initialAccountId: selectedAccount?.id),
+                          onPressed: () => _showCreateProjectDialog(
+                            context,
+                            ref,
+                            initialAccountId: selectedAccount?.id,
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.black,
                             foregroundColor: Colors.white,
@@ -91,30 +105,44 @@ class ProjectsScreen extends ConsumerWidget {
                   },
                 );
               },
-              loading: () =>
-                  const Center(child: CircularProgressIndicator(color: Colors.black)),
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: Colors.black),
+              ),
               error: (err, _) => Center(child: Text('Error: $err')),
             ),
           ),
         ],
       ),
-      floatingActionButton: selectedAccount != null ? FloatingActionButton(
-        onPressed: () => _showCreateProjectDialog(context, ref, initialAccountId: selectedAccount.id),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        child: const Icon(LucideIcons.plus),
-      ) : null,
+      floatingActionButton: selectedAccount != null
+          ? FloatingActionButton(
+              onPressed: () => _showCreateProjectDialog(
+                context,
+                ref,
+                initialAccountId: selectedAccount.id,
+              ),
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              child: const Icon(LucideIcons.plus),
+            )
+          : null,
     );
   }
 
-  void _showCreateProjectDialog(BuildContext context, WidgetRef ref, {String? initialAccountId}) {
+  void _showCreateProjectDialog(
+    BuildContext context,
+    WidgetRef ref, {
+    String? initialAccountId,
+  }) {
     final nameController = TextEditingController();
     final amountController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('NEW PROJECT', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+        title: const Text(
+          'NEW PROJECT',
+          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

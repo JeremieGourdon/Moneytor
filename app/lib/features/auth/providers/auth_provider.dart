@@ -9,9 +9,9 @@ class AuthStateNotifier extends _$AuthStateNotifier {
   @override
   Stream<User?> build() {
     final repository = ref.watch(authRepositoryProvider);
-
-    // Listen to auth state changes and emit the user.
-    return repository.authStateChanges.map((event) => event.session?.user);
+    return repository.authStateChanges
+        .map((event) => event.session?.user)
+        .asBroadcastStream();
   }
 
   Future<void> signIn(String email, String password) async {
