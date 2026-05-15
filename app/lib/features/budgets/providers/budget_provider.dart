@@ -10,7 +10,10 @@ part 'budget_provider.g.dart';
 @Riverpod(keepAlive: true)
 Stream<List<BudgetModel>> allBudgets(Ref ref) {
   final household = ref.watch(householdProvider).value;
-  developer.log('allBudgetsProvider: household is ${household?.id}', name: 'budget.provider');
+  developer.log(
+    'allBudgetsProvider: household is ${household?.id}',
+    name: 'budget.provider',
+  );
   if (household == null) return Stream.value([]);
 
   return ref.watch(budgetRepositoryProvider).watchBudgets(household.id);

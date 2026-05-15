@@ -64,9 +64,10 @@ class HouseholdRepository {
     final invitation = InvitationModel.fromJson(invitationData);
 
     // Update the USER to link to the shared household
-    await _supabase.from('users').update({
-      'shared_household_id': invitation.householdId,
-    }).eq('id', userId);
+    await _supabase
+        .from('users')
+        .update({'shared_household_id': invitation.householdId})
+        .eq('id', userId);
 
     await _supabase
         .from('invitations')

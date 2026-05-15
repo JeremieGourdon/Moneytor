@@ -15,7 +15,8 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(profileProvider).value;
+    final profileAsync = ref.watch(profileProvider);
+    final profile = profileAsync.value;
     final currentPeriod = ref.watch(currentPeriodProvider).value;
     final totalRav = ref.watch(totalDisposableIncomeProvider);
     final currency = ref.watch(householdProvider).value?.currency ?? 'EUR';
@@ -36,15 +37,6 @@ class DashboardScreen extends ConsumerWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        currentPeriod?.name.toUpperCase() ?? 'NO ACTIVE PERIOD',
-                        style: GoogleFonts.jetBrainsMono(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF71717A),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
                       Text(
                         'Bonjour, ${profile?.firstName ?? 'User'}',
                         style: const TextStyle(
@@ -168,7 +160,7 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // Hero RAV Section (The Split Card)
-              _buildHeroRAV(context, totalRav, formatter),
+              _buildHeroRAV(context, totalRav, formatter, currentPeriod?.name),
 
               const SizedBox(height: 32),
 
@@ -213,6 +205,7 @@ class DashboardScreen extends ConsumerWidget {
     BuildContext context,
     int ravCents,
     NumberFormat formatter,
+    String? periodName,
   ) {
     final ravDouble = ravCents / 100.0;
 
@@ -226,14 +219,28 @@ class DashboardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'CURRENT DISPOSABLE INCOME',
-            style: TextStyle(
-              color: Color(0xFF71717A),
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'CURRENT DISPOSABLE INCOME',
+                style: TextStyle(
+                  color: Color(0xFF71717A),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+              if (periodName != null)
+                Text(
+                  periodName.toUpperCase(),
+                  style: GoogleFonts.jetBrainsMono(
+                    color: Colors.white.withAlpha(153),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(

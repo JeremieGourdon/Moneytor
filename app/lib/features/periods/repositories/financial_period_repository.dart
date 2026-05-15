@@ -12,10 +12,11 @@ class FinancialPeriodRepository {
 
   /// Streams the current active financial period.
   Stream<FinancialPeriodModel?> watchCurrentPeriod(String householdId) {
+    final now = DateTime.now().toUtc().toIso8601String();
     return _db
         .watch(
-          'SELECT * FROM financial_periods WHERE household_id = ? AND end_date IS NULL ORDER BY start_date DESC LIMIT 1',
-          [householdId],
+          'SELECT * FROM financial_periods WHERE household_id = ? AND start_date <= ? AND end_date > ? ORDER BY start_date DESC LIMIT 1',
+          [householdId, now, now],
         )
         .map(
           (rows) => rows.isNotEmpty

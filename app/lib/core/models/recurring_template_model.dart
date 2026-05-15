@@ -15,10 +15,10 @@ class RecurringTemplateModel {
   final String type; // 'income', 'expense', 'transfer'
   final String cronSchedule; // 'monthly', 'weekly'
   final DateTime? nextExecutionDate;
-  
+
   @SQLiteBoolConverter()
   final bool isActive;
-  
+
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? deletedAt;

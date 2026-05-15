@@ -16,7 +16,10 @@ class RecurringTemplateRepository {
           'SELECT * FROM recurring_templates WHERE household_id = ? AND deleted_at IS NULL',
           [householdId],
         )
-        .map((rows) => rows.map((row) => RecurringTemplateModel.fromJson(row)).toList());
+        .map(
+          (rows) =>
+              rows.map((row) => RecurringTemplateModel.fromJson(row)).toList(),
+        );
   }
 
   /// Creates a new recurring template.
@@ -80,5 +83,7 @@ class RecurringTemplateRepository {
 
 @Riverpod(keepAlive: true)
 RecurringTemplateRepository recurringTemplateRepository(Ref ref) {
-  return RecurringTemplateRepository(ref.watch(databaseServiceProvider.notifier));
+  return RecurringTemplateRepository(
+    ref.watch(databaseServiceProvider.notifier),
+  );
 }

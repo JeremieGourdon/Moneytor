@@ -10,7 +10,10 @@ part 'project_provider.g.dart';
 @Riverpod(keepAlive: true)
 Stream<List<ProjectModel>> allProjects(Ref ref) {
   final household = ref.watch(householdProvider).value;
-  developer.log('allProjectsProvider: household is ${household?.id}', name: 'project.provider');
+  developer.log(
+    'allProjectsProvider: household is ${household?.id}',
+    name: 'project.provider',
+  );
   if (household == null) return Stream.value([]);
 
   return ref.watch(projectRepositoryProvider).watchProjects(household.id);
@@ -53,7 +56,11 @@ class ProjectNotifier extends _$ProjectNotifier {
   @override
   FutureOr<void> build() async {}
 
-  Future<void> createProject(String name, int targetAmount, {String? accountId}) async {
+  Future<void> createProject(
+    String name,
+    int targetAmount, {
+    String? accountId,
+  }) async {
     final household = await ref.read(householdProvider.future);
     if (household == null) return;
 

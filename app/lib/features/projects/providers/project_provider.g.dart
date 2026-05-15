@@ -48,7 +48,7 @@ final class AllProjectsProvider
   }
 }
 
-String _$allProjectsHash() => r'b0cc8a2f7bcef89519ede7dfa7f2fcf72fec69bf';
+String _$allProjectsHash() => r'4e189ab4d107b36765cfd57f1b92c4a3683fbb30';
 
 @ProviderFor(accountProjects)
 final accountProjectsProvider = AccountProjectsFamily._();

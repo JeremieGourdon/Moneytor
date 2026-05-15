@@ -29,8 +29,10 @@ class RecurringTemplatesScreen extends ConsumerWidget {
                 children: [
                   const Icon(LucideIcons.repeat, size: 64, color: Colors.grey),
                   const SizedBox(height: 16),
-                  const Text('Aucun abonnement configuré.',
-                      style: TextStyle(color: Colors.grey)),
+                  const Text(
+                    'Aucun abonnement configuré.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () => _showAddTemplateDialog(context, ref),
@@ -55,8 +57,8 @@ class RecurringTemplatesScreen extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(
-            child: CircularProgressIndicator(color: Colors.black)),
+        loading: () =>
+            const Center(child: CircularProgressIndicator(color: Colors.black)),
         error: (err, _) => Center(child: Text('Erreur: $err')),
       ),
       floatingActionButton: FloatingActionButton(
@@ -111,7 +113,9 @@ class RecurringTemplatesScreen extends ConsumerWidget {
                   items: const [
                     DropdownMenuItem(value: 'monthly', child: Text('Mensuel')),
                     DropdownMenuItem(
-                        value: 'weekly', child: Text('Hebdomadaire')),
+                      value: 'weekly',
+                      child: Text('Hebdomadaire'),
+                    ),
                   ],
                   onChanged: (val) => setState(() => frequency = val!),
                   decoration: const InputDecoration(labelText: 'Fréquence'),
@@ -119,7 +123,10 @@ class RecurringTemplatesScreen extends ConsumerWidget {
                 DropdownButtonFormField<String>(
                   initialValue: selectedAccountId,
                   items: accounts
-                      .map((a) => DropdownMenuItem(value: a.id, child: Text(a.name)))
+                      .map(
+                        (a) =>
+                            DropdownMenuItem(value: a.id, child: Text(a.name)),
+                      )
                       .toList(),
                   onChanged: (val) {
                     setState(() => selectedAccountId = val);
@@ -131,27 +138,33 @@ class RecurringTemplatesScreen extends ConsumerWidget {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('ANNULER')),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('ANNULER'),
+            ),
             ElevatedButton(
               onPressed: () {
                 if (descController.text.isNotEmpty &&
                     selectedAccountId != null) {
                   final amount =
                       (double.tryParse(amountController.text) ?? 0) * 100;
-                  ref.read(recurringTemplateProvider.notifier).createTemplate(
+                  ref
+                      .read(recurringTemplateProvider.notifier)
+                      .createTemplate(
                         accountId: selectedAccountId!,
                         description: descController.text,
                         amount: amount.toInt(),
                         type: type,
                         frequency: frequency,
-                        startDate: DateTime.now(), // For simplicity, start today
+                        startDate:
+                            DateTime.now(), // For simplicity, start today
                       );
                   Navigator.pop(context);
                 }
               },
               style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black, foregroundColor: Colors.white),
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('CRÉER'),
             ),
           ],
@@ -171,8 +184,10 @@ class _TemplateCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       child: ListTile(
-        title: Text(template.description,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          template.description,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         subtitle: Text(
           '${template.cronSchedule == 'monthly' ? 'Mensuel' : 'Hebdo'} • Prochain: ${template.nextExecutionDate != null ? DateFormat('dd/MM').format(template.nextExecutionDate!) : 'N/A'}',
           style: const TextStyle(fontSize: 12),
@@ -214,7 +229,9 @@ class _TemplateCard extends ConsumerWidget {
         content: const Text('Voulez-vous vraiment supprimer cet abonnement ?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context), child: const Text('NON')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('NON'),
+          ),
           TextButton(
             onPressed: () {
               ref
