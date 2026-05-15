@@ -17,9 +17,39 @@ class MainLayout extends ConsumerWidget {
     // If profile is loading or user is new (redirection to onboarding is pending),
     // show a clean splash/loading state to prevent dashboard flash.
     if (profileAsync.isLoading || profileAsync.value?.firstName == 'New User') {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Colors.white,
-        body: Center(child: CircularProgressIndicator(color: Colors.black)),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/branding/app_icon.png',
+                width: 100,
+                height: 100,
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Moneytor',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1,
+                  fontFamily: 'JetBrains Mono',
+                ),
+              ),
+              const SizedBox(height: 48),
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.black,
+                  strokeWidth: 2,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 

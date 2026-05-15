@@ -56,16 +56,12 @@ flutter_launcher_icons:
 
 flutter_native_splash:
   color: "#ffffff"
-  image: "assets/branding/splash_logo.png"
+  image: "assets/branding/app_icon.png"
   android: true
   ios: true
   web: true
   
-  # Reduce margins to make logo bigger
-  android_gravity: center
-  ios_content_mode: center
-  
   android_12:
-    image: "assets/branding/splash_logo.png"
+    image: "assets/branding/app_icon.png"
     color: "#ffffff"
     icon_background_color: "#ffffff"
